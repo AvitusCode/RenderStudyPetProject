@@ -3,15 +3,18 @@
 #include "../Assets.h"
 #include "../render/Renderer.h"
 
+class GLFWwindow;
+
 class scene_buffers : public Scene
 {
 public:
-	scene_buffers() = default;
+	scene_buffers(GLFWwindow* win) : window(win) {};
 	void OnCreate() override;
 	void OnUpdate() override;
 	void OnDispose() override;
 
 private:
+	GLFWwindow* window;
 	Assets assets;
 	
 	unsigned int cubeVAO;

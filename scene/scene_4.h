@@ -5,10 +5,12 @@
 #include <glm/glm.hpp>
 
 class Model;
+class GLFWwindow;
 
 class scene_4 : public Scene
 {
 public:
+    scene_4(GLFWwindow* win) : window(win) {}
 	void OnCreate() override;
 	void OnUpdate() override;
 	void OnDispose() override;
@@ -25,6 +27,9 @@ private:
         unsigned int AO;
         glm::vec3 position;
     };
+
+    GLFWwindow* window;
+
 	Assets assets;
     std::array<MaterialPBRTexture, 5> materials;
 

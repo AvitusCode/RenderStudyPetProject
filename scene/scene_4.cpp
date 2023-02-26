@@ -3,6 +3,8 @@
 #include "../render/Shader.h"
 #include "../render/Model.h"
 #include "../stb_image.h"
+#include "../Window.h"
+#include "../objects/Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <vector>
@@ -14,6 +16,8 @@ void renderQuad();
 
 void scene_4::OnCreate()
 {
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
     camera.getPosition() = glm::vec3(0.0f, 0.0f, 15.0f);
 
 	glEnable(GL_DEPTH_TEST);
@@ -284,15 +288,13 @@ void scene_4::OnCreate()
     glDeleteRenderbuffers(1, &captureRBO);
     glDeleteFramebuffers(1, &captureFBO);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.1f, 100.0f);
     pbrShader->use();
     pbrShader->setMat4("projection", projection);
     backgroundShader->use();
     backgroundShader->setMat4("projection", projection);
 
-    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
-    glViewport(0, 0, windowWidth, windowHeight);
-
+    glViewport(0, 0, handle.getWidth(), handle.getHeight());
 
     // EXPERIMENT
     glGenFramebuffers(1, &hdrFBO);
@@ -302,7 +304,7 @@ void scene_4::OnCreate()
     for (uint16_t i = 0; i < 2; i++)
     {
         glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, handle.getWidth(), handle.getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -312,7 +314,7 @@ void scene_4::OnCreate()
 
     glGenRenderbuffers(1, &rboDepth);
     glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, handle.getWidth(), handle.getHeight());
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
     unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
@@ -330,7 +332,7 @@ void scene_4::OnCreate()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, handle.getWidth(), handle.getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -352,7 +354,10 @@ size_t arraySize(const T(&)[N]) {
 
 void scene_4::OnUpdate()
 {
-    // Освещение
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
+
+    // lightning
     glm::vec3 lightPositions[] = {
         glm::vec3(-10.0f,  10.0f, 10.0f),
         glm::vec3(10.0f,  10.0f, 10.0f),
@@ -371,7 +376,7 @@ void scene_4::OnUpdate()
     Shader* blurShader       = assets.getShader("blur");
     Shader* finalShader      = assets.getShader("bloom");
 
-    // Рендер
+    // render
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -536,8 +541,8 @@ unsigned int loadTexture(char const* path)
     return textureID;
 }
 
-unsigned int sphereVAO = 0;
-unsigned int indexCount;
+static unsigned int sphereVAO = 0;
+static unsigned int indexCount;
 void renderSphere()
 {
     if (sphereVAO == 0)
@@ -632,8 +637,8 @@ void renderSphere()
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 }
 
-unsigned int cubeVAO = 0;
-unsigned int cubeVBO = 0;
+static unsigned int cubeVAO = 0;
+static unsigned int cubeVBO = 0;
 void renderCube()
 {
     if (cubeVAO == 0)
@@ -709,8 +714,8 @@ void renderCube()
     glBindVertexArray(0);
 }
 
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
+static unsigned int quadVAO = 0;
+static unsigned int quadVBO;
 void renderQuad()
 {
     if (quadVAO == 0)

@@ -8,7 +8,7 @@
 
 extern float deltaTime;
 
-class RenderGui
+class RenderGui final
 {
 public:
 	static void ImGuiInit(GLFWwindow* window, const Renderer& rendererArg);

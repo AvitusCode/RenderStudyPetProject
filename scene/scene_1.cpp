@@ -4,6 +4,8 @@
 #include "../render/Mesh.h"
 #include "../render/Model.h"
 #include "../interface/interface.h"
+#include "../Window.h"
+#include "../objects/Camera.h"
 
 // Creating a neccessary new data
 void scene_1::OnCreate()
@@ -12,6 +14,9 @@ void scene_1::OnCreate()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+	Camera& camera = handle.getCamera();
 
 	camera.getPosition() = glm::vec3(-5.0f, 3.0f, 15.0f);
 
@@ -23,7 +28,7 @@ void scene_1::OnCreate()
 	assets.storeShader(gridShader, "gridShader");
 
 	view = camera.GetViewMatrix();
-	projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+	projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.01f, 100.0f);
 
 	// Sets up global uniforms for each shader used
 	uniformBuffer.initUniformBuffer();
@@ -126,6 +131,9 @@ void scene_1::OnCreate()
 
 void scene_1::OnUpdate()
 {
+	auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+	Camera& camera = handle.getCamera();
+
 	Shader* phongShader = assets.getShader("phongShader");
 	Shader* gridShader  = assets.getShader("gridShader");
 	Material* boxTex = assets.getMaterial("boxTex");
@@ -134,7 +142,7 @@ void scene_1::OnUpdate()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-	projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+	projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.01f, 100.0f);
 	view = camera.GetViewMatrix();
 	uniformBuffer.updateUniformBuffer(view, projection);
 

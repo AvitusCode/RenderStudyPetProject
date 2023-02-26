@@ -5,17 +5,26 @@
 #include "../render/Model.h"
 #include "../render/Shader.h"
 #include "../render/Texture.h"
+#include "../Window.h"
+#include "../objects/Camera.h"
 
-constexpr int SHADOW_WIDTH = 1024;
-constexpr int SHADOW_HEIGHT = 1024;
+namespace
+{
 
-bool shadows = true;
+    constexpr int SHADOW_WIDTH = 1024;
+    constexpr int SHADOW_HEIGHT = 1024;
+
+    bool shadows = true;
+}
 
 // Creating a neccessary new data
 void scene_3::OnCreate()
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
 
     camera.getPosition() = glm::vec3(0.0f, 0.0f, 3.0f);
     camera.setMSpeed(15.0f);
@@ -193,6 +202,9 @@ void render(const Shader& shader, unsigned int cubeVAO, bool flag)
 
 void scene_3::OnUpdate()
 {
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
+
     Shader* shader      = assets.getShader("shader");
     Shader* depthShader = assets.getShader("depth");
     Shader* lightShader = assets.getShader("light");
@@ -224,10 +236,10 @@ void scene_3::OnUpdate()
     render(*depthShader, cubeVAO, false);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glViewport(0, 0, windowWidth, windowHeight);
+    glViewport(0, 0, handle.getWidth(), handle.getHeight());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.1f, 100.0f);
     view = camera.GetViewMatrix();
     ub.updateUniformBuffer(view, projection);
     

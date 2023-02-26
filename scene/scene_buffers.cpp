@@ -1,11 +1,16 @@
 #include "scene_buffers.h"
 #include "../render/Shader.h"
 #include "../main.h"
+#include "../Window.h"
+#include "../objects/Camera.h"
 #include <iostream>
 
 void scene_buffers::OnCreate()
 {
     glEnable(GL_DEPTH_TEST);
+
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
 
     Shader* shader = new Shader(load_shader("res/shaders_scene_2/framebuffers.vert", "res/shaders_scene_2/framebuffers.frag"));
     Shader* screenShader = new Shader(load_shader("res/shaders_scene_2/framebuffers_screen.vert", "res/shaders_scene_2/framebuffers_screen.frag"));
@@ -128,14 +133,14 @@ void scene_buffers::OnCreate()
 
     glGenTextures(1, &textureColorbufferMultisampler);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureColorbufferMultisampler);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, windowWidth, windowHeight, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, handle.getWidth(), handle.getHeight(), GL_TRUE);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, textureColorbufferMultisampler, 0);
 
     // for depth and stencil
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, handle.getWidth(), handle.getHeight());
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -149,7 +154,7 @@ void scene_buffers::OnCreate()
 
     glGenTextures(1, &textureColorbuffer);
     glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, handle.getWidth(), handle.getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
@@ -163,6 +168,9 @@ void scene_buffers::OnCreate()
 
 void scene_buffers::OnUpdate()
 {
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
+
     Shader* shader = assets.getShader("shader");
     Shader* screenShader = assets.getShader("screenShader");
     Texture* cubeTexture = assets.getTexture("cubeTex");
@@ -179,7 +187,7 @@ void scene_buffers::OnUpdate()
     shader->use();
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = camera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.1f, 100.0f);
     shader->setMat4("view", view);
     shader->setMat4("projection", projection);
 
@@ -205,7 +213,7 @@ void scene_buffers::OnUpdate()
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO);
-    glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, handle.getWidth(), handle.getHeight(), 0, 0, handle.getWidth(), handle.getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);

@@ -15,7 +15,6 @@
 #include "render/Texture.h"
 #include "objects/Camera.h"
 #include "interface/interface.h"
-#include "interface/input.h"
 #include "render/Cubemap.h"
 #include "render/Renderer.h"
 #include "light/DirLight.h"
@@ -31,50 +30,28 @@
 #include "scene/scene_buffers.h"
 #include "Window.h"
 
-const int WINDOW_WIDTH = 1920;
-const int WINDOW_HEIGHT = 1080;
-
-int windowWidth = WINDOW_WIDTH;
-int windowHeight = WINDOW_HEIGHT;
-
 float deltaTime = 0.0f;
-float lastFrame = 0.0f;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-GLFWwindow* window;
-SceneManager* ptr_sm;
-
-int setupGlfwContext(WindowManager& wm)
-{
-	int res = wm.init("OpenGl Pet-Project", WINDOW_WIDTH, WINDOW_HEIGHT);
-	window = wm.getWindow();
-
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetKeyCallback(window, key_callback);
-
-	return res;
-}
+// TODO: Level changer
 
 int main(void)
 {
 	WindowManager wm;
 
-	if (setupGlfwContext(wm) != 0){
+	if (wm.init("OpenGl Pet-Project", 1920, 1080)){
 		return -1;
 	}
 
 	// Here we can set all neccessary scenes
 	SceneManager sm{};
-	ptr_sm = &sm;
-	sm.Add<scene_1>("scene_1");
-	sm.Add<scene_2>("scene_2");
-	sm.Add<scene_3>("scene_3");
-	sm.Add<scene_4>("scene_4");
-	sm.Add<scene_buffers>("scene_buffers");
+	sm.Add<scene_1>("scene_1", wm.getGLFWwindow());
+	sm.Add<scene_2>("scene_2", wm.getGLFWwindow());
+	sm.Add<scene_3>("scene_3", wm.getGLFWwindow());
+	sm.Add<scene_4>("scene_4", wm.getGLFWwindow());
+	sm.Add<scene_buffers>("scene_buffers", wm.getGLFWwindow());
 	sm.SetScene(0);
 
+	float lastFrame = 0.0f;
 	// Render loop
 	while (!wm.shouldClose())
 	{
@@ -84,7 +61,7 @@ int main(void)
 		lastFrame = currentFrame;
 
 		// Processes any mouse or keyboard input for camera movement
-		processInput(window, deltaTime);
+		wm.processInput(deltaTime);
 
 		sm.OnUpdate();
 

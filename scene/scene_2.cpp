@@ -3,12 +3,17 @@
 #include "../render/SkyBox.h"
 #include "../render/Mesh.h"
 #include "../render/Model.h"
+#include "../Window.h"
+#include "../objects/Camera.h"
 
 // Creating a neccessary new data
 void scene_2::OnCreate()
 {
 	glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
 
     camera.getPosition() = glm::vec3(0.0f, 0.0f, 3.0f);
     camera.setMSpeed(150.0f);
@@ -35,7 +40,7 @@ void scene_2::OnCreate()
     _skybox = skybox;
 
     view = camera.GetViewMatrix();
-    projection = glm::perspective(glm::radians(camera.getZoom()), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f);
+    projection = glm::perspective(glm::radians(camera.getZoom()), (float)handle.getWidth() / (float)handle.getHeight(), 0.1f, 1000.0f);
 
     uniformBuffer.initUniformBuffer();
     uniformBuffer.bindingUniformBlock(asteroidShader->getId(), "Matrices");
@@ -113,7 +118,10 @@ void scene_2::OnUpdate()
     Shader* planetShader = assets.getShader("planet");
     Shader* skyboxShader = assets.getShader("skybox");
 
-    projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f);
+    auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
+    Camera& camera = handle.getCamera();
+
+    projection = glm::perspective(glm::radians(45.0f), (float)handle.getWidth() / (float)handle.getHeight(), 0.1f, 1000.0f);
     view = camera.GetViewMatrix();
     uniformBuffer.updateUniformBuffer(view, projection);
 

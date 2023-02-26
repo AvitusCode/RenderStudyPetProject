@@ -7,11 +7,12 @@
 
 class Model;
 class Skybox;
+class GLFWwindow;
 
 class scene_2 : public Scene
 {
 public:
-	scene_2() : uniformBuffer(UniformBuffer(0)) {}
+	scene_2(GLFWwindow* win) : window(win), uniformBuffer(UniformBuffer(0)) {}
 	void OnCreate() override;
 	void OnUpdate() override;
 	void OnDispose() override;
@@ -19,6 +20,7 @@ public:
 	const Assets& getAssets() const;
 
 private:
+	GLFWwindow* window;
 	UniformBuffer uniformBuffer;
 	Assets assets;
 
