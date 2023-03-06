@@ -15,7 +15,7 @@ int WindowManager::init(std::string const& windowTitle, unsigned int WINDOW_WIDT
 	windowHeight = WINDOW_HEIGHT;
 
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
@@ -44,6 +44,8 @@ int WindowManager::init(std::string const& windowTitle, unsigned int WINDOW_WIDT
 	glfwSetScrollCallback(mWindow, scroll_callback);
 	glfwSetKeyCallback(mWindow, key_callback);
 	glfwSetWindowCloseCallback(mWindow, close_callback);
+
+	glfwSwapInterval(1);
 
 	lastX = (float)windowWidth / 2;
 	lastY = (float)windowHeight / 2;

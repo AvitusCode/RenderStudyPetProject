@@ -32,7 +32,5 @@ public:
 private:
 	// references for all mesh objects
 	std::vector<Core*> objects;
-	// Associates each shader used in the meshes vector with its corresponding meshes
-	std::map<int, std::vector<Core*>> shaderMap;
 	LightManager lightManager;
 };
