@@ -12,7 +12,7 @@ class scene_1 : public Scene
 public:
 	scene_1(GLFWwindow* win) : window(win), uniformBuffer(UniformBuffer(0)) {}
 	void OnCreate() override;
-	void OnUpdate() override;
+	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
 	const Renderer& getRenderer() const;

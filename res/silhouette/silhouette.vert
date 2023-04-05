@@ -5,12 +5,17 @@ layout (location = 2) in vec3 aNormal;
 
 out vec3 WorldPos;
 
-uniform mat4 MWP;
+layout (std140) uniform Matrices
+{
+    mat4 view;
+    mat4 projection;
+};
+
 uniform mat4 model;
 
 void main()
 {
     vec4 position = vec4(aPos, 1.0);
     WorldPos = (model * position).xyz;
-    gl_Position = MWP * position;
+    gl_Position = projection * view * model * position;
 }

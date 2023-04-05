@@ -47,9 +47,20 @@ void LightManager::init()
 		}
 	}
 
-	glUniform1i(glGetUniformLocation(shaderProgramID, "nrDirLights"), nrDirLights);
-	glUniform1i(glGetUniformLocation(shaderProgramID, "nrPointLights"), nrPointLights);
-	glUniform1i(glGetUniformLocation(shaderProgramID, "nrSpotLights"), nrSpotLights);
+	int checkId = glGetUniformLocation(shaderProgramID, "nrDirLights");
+	if (checkId != -1) {
+	    glUniform1i(checkId, nrDirLights);
+    }
+
+	checkId = glGetUniformLocation(shaderProgramID, "nrPointLights");
+	if (checkId != -1) {
+		glUniform1i(checkId, nrPointLights);
+	}
+
+	checkId = glGetUniformLocation(shaderProgramID, "nrSpotLights");
+	if (checkId != -1) {
+		glUniform1i(checkId, nrSpotLights);
+	}
 }
 
 // TODO: 

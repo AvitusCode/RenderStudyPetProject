@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "SceneManager.h"
 
-void SceneManager::OnUpdate()
+void SceneManager::OnUpdate(float dt)
 {
     if (scenes.size() > current_scene)
     {
@@ -17,7 +17,8 @@ void SceneManager::OnUpdate()
             prev_scene = current_scene;
             scenes.at(current_scene)->OnCreate();
         }
-        scenes.at(current_scene)->OnUpdate();
+
+        scenes.at(current_scene)->OnUpdate(dt);
     }
     else{
         exit(EXIT_FAILURE);

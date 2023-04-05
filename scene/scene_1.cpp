@@ -20,9 +20,23 @@ void scene_1::OnCreate()
 
 	camera.getPosition() = glm::vec3(-5.0f, 3.0f, 15.0f);
 
-	Shader* phongShader = new Shader(load_shader("res/shaders/phong.vert", "res/shaders/phong.frag"/*, "res/shaders/phong.geom"*/));
-	Shader* skyboxShader = new Shader(load_shader("res/shaders/skybox.vert", "res/shaders/skybox.frag"));
-	Shader* gridShader = new Shader(load_shader("res/shaders/grid.vert", "res/shaders/grid.frag"));
+	ShaderComponent vertexComponent;
+	ShaderComponent fragmentComponent;
+	vertexComponent.loadComponentFromFile("res/shaders/phong.vert", GL_VERTEX_SHADER);
+	fragmentComponent.loadComponentFromFile("res/shaders/phong.frag", GL_FRAGMENT_SHADER);
+
+	Shader* phongShader = new Shader(vertexComponent, fragmentComponent);
+
+	vertexComponent.loadComponentFromFile("res/shaders/skybox.vert", GL_VERTEX_SHADER);
+	fragmentComponent.loadComponentFromFile("res/shaders/skybox.frag", GL_FRAGMENT_SHADER);
+	Shader* skyboxShader = new Shader( vertexComponent, fragmentComponent );
+
+	vertexComponent.loadComponentFromFile("res/shaders/grid.vert", GL_VERTEX_SHADER);
+	fragmentComponent.loadComponentFromFile("res/shaders/grid.frag", GL_FRAGMENT_SHADER);
+	Shader* gridShader = new Shader( vertexComponent, fragmentComponent );
+	vertexComponent.deleteComponent();
+	fragmentComponent.deleteComponent();
+
 	assets.storeShader(phongShader, "phongShader");
 	assets.storeShader(skyboxShader, "skyboxShader");
 	assets.storeShader(gridShader, "gridShader");
@@ -44,7 +58,7 @@ void scene_1::OnCreate()
 	// Sets up variables for the phong lighting shader
 	phongShader->use();
 
-	phongShader->setInt("texture1", 0);
+	phongShader->setInt("texture_diffuse1", 0);
 	phongShader->setVec3("viewPos", camera.getPosition());
 	phongShader->setVec3("material.ambient", boxTex->ambient);
 	phongShader->setVec3("material.diffuse", boxTex->diffuse);
@@ -129,7 +143,7 @@ void scene_1::OnCreate()
 	RenderGui::ImGuiInit(window, renderer);
 }
 
-void scene_1::OnUpdate()
+void scene_1::OnUpdate(float dt)
 {
 	auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
 	Camera& camera = handle.getCamera();

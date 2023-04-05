@@ -28,11 +28,18 @@
 #include "scene/scene_3.h"
 #include "scene/scene_4.h"
 #include "scene/scene_buffers.h"
+#include "scene/scene_tesselation.h"
 #include "Window.h"
 
 float deltaTime = 0.0f;
 
-// TODO: Level changer
+// TODO: tesselation fix
+
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+{
+	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+}
 
 int main(void)
 {
@@ -42,6 +49,9 @@ int main(void)
 		return -1;
 	}
 
+	//glEnable(GL_DEBUG_OUTPUT);
+	//glDebugMessageCallback(MessageCallback, 0);
+
 	// Here we can set all neccessary scenes
 	SceneManager sm{};
 	sm.Add<scene_1>("scene_1", wm.getGLFWwindow());
@@ -49,7 +59,8 @@ int main(void)
 	sm.Add<scene_3>("scene_3", wm.getGLFWwindow());
 	sm.Add<scene_4>("scene_4", wm.getGLFWwindow());
 	sm.Add<scene_buffers>("scene_buffers", wm.getGLFWwindow());
-	sm.SetScene(0);
+	sm.Add<scene_tesselation>("scene_tesselation", wm.getGLFWwindow()); // i = 5
+	sm.SetScene(1);
 
 	float lastFrame = 0.0f;
 	// Render loop
@@ -63,7 +74,7 @@ int main(void)
 		// Processes any mouse or keyboard input for camera movement
 		wm.processInput(deltaTime);
 
-		sm.OnUpdate();
+		sm.OnUpdate(currentFrame);
 
 		int glErrorCurrent = glGetError();
 		if (glErrorCurrent != 0) { 
@@ -74,7 +85,7 @@ int main(void)
 		wm.pollEvents();
 	}
 
-	// Terminate process
+	// Terminate process (fix problem)
 	sm.OnDispose();
 	wm.shutdown();
 

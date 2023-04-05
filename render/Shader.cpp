@@ -4,21 +4,40 @@
 #include <glm/glm.hpp>
 
 #include <string>
-#include <fstream>
-#include <sstream>
 #include <iostream>
 
-Shader::Shader(unsigned int index) : ID(index){}
-Shader::~Shader() = default;
+Shader::Shader() : ID(0), is_linked(false) {}
+
+Shader::~Shader() noexcept {
+    deleteProgram();
+}
 
 unsigned int Shader::getId() const {
     return ID;
 }
 
-    // Активация шейдера
-void Shader::use() const
+void Shader::use() const {
+    if (is_linked) {
+        glUseProgram(ID);
+    }
+}
+
+void Shader::createProgram() {
+    if (ID != 0) {
+        return;
+    }
+
+    ID = glCreateProgram();
+}
+
+void Shader::deleteProgram() noexcept
 {
-    glUseProgram(ID);
+    if (ID == 0) {
+        return;
+    }
+
+    glDeleteProgram(ID);
+    is_linked = false;
 }
 
     // Полезные uniform-функции
@@ -71,138 +90,44 @@ void Shader::setMat4(const std::string& name, const glm::mat4& mat) const{
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-    // Полезные функции для проверки ошибок компиляции/связывания шейдеров
-bool Shader::checkCompileErrors(GLuint shader, std::string type)
+bool Shader::addComponentToProgram(const ShaderComponent& scomponent) const
 {
-    GLint success;
-    GLchar infoLog[1024];
-    if (type != "PROGRAM")
-    {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            std::cerr << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-            return false;
-        }
-    }
-    else
-    {
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success)
-        {
-            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            std::cerr << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
-            return false;
-        }
+    if (!scomponent.isCompiled()) {
+        return false;
     }
 
+    glAttachShader(ID, scomponent.getID());
     return true;
 }
 
-unsigned int load_shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath)
+bool Shader::linkProgram()
 {
-    // 1. Получение исходного кода вершинного/фрагментного шейдера
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::string geometryCode;
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-    std::ifstream gShaderFile;
+    if (is_linked) {
+        return true;
+    }
 
-    // Убеждаемся, что объекты ifstream могут выбросить исключение:
-    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    try
+    glLinkProgram(ID);
+    GLint linkStatus = 0;
+    glGetProgramiv(ID, GL_LINK_STATUS, &linkStatus);
+    is_linked = linkStatus == GL_TRUE;
+
+    if (!is_linked)
     {
-        // Открываем файлы
-        vShaderFile.open(vertexPath);
-        fShaderFile.open(fragmentPath);
-        std::stringstream vShaderStream, fShaderStream;
+        std::cerr << "ERROR: link program failuare with ID = " << ID << std::endl;
 
-        // Читаем содержимое файловых буферов
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
+        GLint logStatus = 0;
+        glGetProgramiv(ID, GL_INFO_LOG_LENGTH, &logStatus);
 
-        // Закрываем файлы
-        vShaderFile.close();
-        fShaderFile.close();
-
-        // Конвертируем в строковую переменную данные из потока
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
-
-        // Если путь к геометрическому шейдеру присутствует, то также загружаем и геометрический шейдер
-        if (geometryPath != nullptr)
+        if (logStatus > 0)
         {
-            gShaderFile.open(geometryPath);
-            std::stringstream gShaderStream;
-            gShaderStream << gShaderFile.rdbuf();
-            gShaderFile.close();
-            geometryCode = gShaderStream.str();
+            GLchar* logMessage = new GLchar[logStatus];
+            glGetProgramInfoLog(ID, logStatus, nullptr, logMessage);
+            std::cerr << "Log message: \n\n" << logMessage << std::endl;
+            delete[] logMessage;
         }
-    }
-    catch (std::ifstream::failure& e){
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-        return 0;
+
+        return false;
     }
 
-    const char* vShaderCode = vertexCode.c_str();
-    const char* fShaderCode = fragmentCode.c_str();
-
-    // 2. Компилируем шейдеры
-    unsigned int vertex, fragment;
-
-    // Вершинный шейдер
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vShaderCode, NULL);
-    glCompileShader(vertex);
-
-    if (!Shader::checkCompileErrors(vertex, "VERTEX")) {
-        return 0;
-    }
-
-    // Фрагментный шейдер
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fShaderCode, NULL);
-    glCompileShader(fragment);
-    if (!Shader::checkCompileErrors(fragment, "FRAGMENT")){
-        return 0;
-    }
-
-    // Если был дан геометрический шейдер, то компилируем его
-    unsigned int geometry;
-    if (geometryPath != nullptr)
-    {
-        const char* gShaderCode = geometryCode.c_str();
-        geometry = glCreateShader(GL_GEOMETRY_SHADER);
-        glShaderSource(geometry, 1, &gShaderCode, NULL);
-        glCompileShader(geometry);
-        if (!Shader::checkCompileErrors(geometry, "GEOMETRY")) {
-            return 0;
-        }
-    }
-
-    // Шейдерная программа
-    unsigned int index = glCreateProgram();
-    glAttachShader(index, vertex);
-    glAttachShader(index, fragment);
-    if (geometryPath != nullptr) {
-        glAttachShader(index, geometry);
-    }
-    glLinkProgram(index);
-
-    if (!Shader::checkCompileErrors(index, "PROGRAM")) {
-        return 0;
-    }
-
-    // После того, как мы связали шейдеры с нашей программой, удаляем их, т.к. они нам больше не нужны
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    if (geometryPath != nullptr) {
-        glDeleteShader(geometry);
-    }
-
-    return index;
+    return true;
 }

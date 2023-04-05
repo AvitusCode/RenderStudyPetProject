@@ -1,19 +1,20 @@
 #pragma once
-
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+
+#include "ShaderComponent.h"
 
 class Shader
 {
 public:
-    // Конструктор генерирует шейдер "на лету"
-    Shader(unsigned int index);
-    ~Shader();
+    Shader();
+
+    template<typename... Components>
+    Shader(const Components&... components);
+
+    ~Shader() noexcept;
     // Активация шейдера
     void use() const;
 
@@ -31,12 +32,33 @@ public:
     void setMat3(const std::string& name, const glm::mat3& mat) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
 
+    // Adding neccessary shader components
+    bool addComponentToProgram(const ShaderComponent& scomponent) const;
+    /**
+     * Links the program. If the function succeeds, shader program is ready to use.
+     * @return True, if the shader has been linked or false otherwise.
+     */
+    bool linkProgram();
+    void deleteProgram() noexcept;
+    void createProgram();
+
     unsigned int getId() const;
-
-    static bool checkCompileErrors(GLuint shader, std::string type);
-
 private:
-    unsigned int ID;
+    GLuint ID = 0;
+    bool is_linked = false;
 };
 
-unsigned int load_shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+
+template<typename... Components>
+Shader::Shader(const Components&... components) : ID(0), is_linked(false) 
+{
+    if (sizeof...(Components) < 2) {
+        return;
+    }
+
+    createProgram();
+
+    (addComponentToProgram(components), ...);
+
+    linkProgram();
+}

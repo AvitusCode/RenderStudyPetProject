@@ -13,7 +13,7 @@ class scene_3 : public Scene
 public:
 	scene_3(GLFWwindow* win) : window(win), ub(0) {};
 	void OnCreate() override;
-	void OnUpdate() override;
+	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
 	const Assets& getAssets() const;
@@ -35,6 +35,14 @@ private:
 	unsigned int cubeVAO;
 	unsigned int cubeVBO;
 
+	std::vector<GLuint> adj_indexes;
+	unsigned int adj_cubeVAO;
+	unsigned int adj_cubeVBO;
+	unsigned int adj_cubeEBO;
+
 	glm::mat4 view;
 	glm::mat4 projection;
+
+	void render(const Shader& shader, unsigned int cubeVAO, bool flag, GLenum param);
+	void render_scene(unsigned int cubeVAO, GLenum param);
 };

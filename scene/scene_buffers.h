@@ -10,7 +10,7 @@ class scene_buffers : public Scene
 public:
 	scene_buffers(GLFWwindow* win) : window(win) {};
 	void OnCreate() override;
-	void OnUpdate() override;
+	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
 private:

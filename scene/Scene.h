@@ -9,7 +9,7 @@ public:
 		return sceneManager;
 	};
 	virtual void OnCreate() {};
-	virtual void OnUpdate() {};
+	virtual void OnUpdate(float dt) {};
 	virtual void OnDispose() {};
 	virtual ~Scene() = default;
 private:

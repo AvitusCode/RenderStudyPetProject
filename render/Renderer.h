@@ -25,6 +25,10 @@ public:
 	// Utilize all data
 	void end();
 
+	void setDrawMode(GLenum m);
+
+	GLenum getDrawMode() const;
+
 	const LightManager& getLightManager() const;
 	LightManager& setLightManager();
 	std::vector<Core*>& setObjects();
@@ -33,4 +37,5 @@ private:
 	// references for all mesh objects
 	std::vector<Core*> objects;
 	LightManager lightManager;
+	GLenum draw_mode;
 };

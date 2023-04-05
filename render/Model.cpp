@@ -137,6 +137,12 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 
 		std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+		std::vector<Texture> roughnessMap = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+		textures.insert(textures.end(), roughnessMap.begin(), roughnessMap.end());
+
+		std::vector<Texture> aoMap = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+		textures.insert(textures.end(), aoMap.begin(), aoMap.end());
 	}
 
 	return Mesh(vertices, indices, textures, shaderProgramID);

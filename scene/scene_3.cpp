@@ -8,6 +8,8 @@
 #include "../Window.h"
 #include "../objects/Camera.h"
 
+#include <iostream>
+
 namespace
 {
 
@@ -29,19 +31,37 @@ void scene_3::OnCreate()
     camera.getPosition() = glm::vec3(0.0f, 0.0f, 3.0f);
     camera.setMSpeed(15.0f);
 
-    Shader* shader = new Shader(load_shader("res/shaders_scene4/point_shadow.vert", "res/shaders_scene4/point_shadow.frag"));
-    Shader* depthShader = new Shader(load_shader(
-        "res/shaders_scene4/shadows_depth.vert", 
-        "res/shaders_scene4/shadows_depth.frag", 
-        "res/shaders_scene4/shadows_depth.geom"));
-    Shader* lightShader = new Shader(load_shader("res/shaders_scene4/light.vert", "res/shaders_scene4/light.frag"));
+    ShaderComponent vertexComponent;
+    ShaderComponent fragmentComponent;
+    ShaderComponent geometryComponent;
+
+    vertexComponent.loadComponentFromFile("res/shaders_scene4/point_shadow.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/shaders_scene4/point_shadow.frag", GL_FRAGMENT_SHADER);
+    geometryComponent.loadComponentFromFile("res/shaders_scene4/shadows_depth.geom", GL_GEOMETRY_SHADER);
+    Shader* shader = new Shader(vertexComponent, fragmentComponent);
+
+    vertexComponent.loadComponentFromFile("res/shaders_scene4/shadows_depth.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/shaders_scene4/shadows_depth.frag", GL_FRAGMENT_SHADER);
+    Shader* depthShader = new Shader(vertexComponent, fragmentComponent, geometryComponent);
+
+    vertexComponent.loadComponentFromFile("res/shaders_scene4/light.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/shaders_scene4/light.frag", GL_FRAGMENT_SHADER);
+    Shader* lightShader = new Shader( vertexComponent, fragmentComponent );
+
+    vertexComponent.loadComponentFromFile("res/silhouette/silhouette.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/silhouette/silhouette.frag", GL_FRAGMENT_SHADER);
+    geometryComponent.loadComponentFromFile("res/silhouette/silhouette.geom", GL_GEOMETRY_SHADER);
+    Shader* silhouetteShader = new Shader( vertexComponent, fragmentComponent, geometryComponent );
+
     assets.storeShader(shader, "shader");
     assets.storeShader(lightShader, "light");
     assets.storeShader(depthShader, "depth");
+    assets.storeShader(silhouetteShader, "silhouette");
 
     ub.initUniformBuffer();
     ub.bindingUniformBlock(lightShader->getId(), "Matrices");
     ub.bindingUniformBlock(shader->getId(), "Matrices");
+    ub.bindingUniformBlock(silhouetteShader->getId(), "Matrices");
     
     Texture* diffuseMap = new Texture("res/img/wood.png", "wood");
     assets.storeTexture(diffuseMap, "wood");
@@ -76,48 +96,78 @@ void scene_3::OnCreate()
     shader->setInt("depthMap", 1);
 
     float vertices[] = {
-       -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
-        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, 
-        1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,       
-        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, 
-       -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, 
-       -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, 
+       -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // 0
+        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // 1
+        1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // 2   
+        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // 1
+       -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // 0
+       -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // 3
 
-      -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
-       1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, 
-       1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, 
-       1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-      -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, 
-      -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, 
+      -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // 4
+       1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // 5
+       1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // 6
+       1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // 6
+      -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // 7
+      -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // 4
 
-     -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 
-     -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, 
-     -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 
-     -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, 
-     -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, 
-     -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+     -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // 7
+     -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // 3
+     -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // 0
+     -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // 0
+     -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // 4
+     -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // 7
 
-     1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, 
-     1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-     1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,        
-     1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-     1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f,    
+     1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // 6
+     1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // 2
+     1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // 1       
+     1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // 2
+     1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // 6
+     1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // 5  
 
-    -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-     1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-     1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // 0
+     1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // 2
+     1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // 5
+     1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // 5
+    -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // 4
+    -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // 0
 
-   -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, 
-    1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, 
-    1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,    
-    1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-   -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, 
-   -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f     
+   -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // 3
+    1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // 6
+    1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // 1  
+    1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // 6
+   -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // 3
+   -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // 7  
     };
+
+    float leastVertices[] = {
+        -1.0f, -1.0f, -1.0f, // 0
+         1.0f,  1.0f, -1.0f,  // 1
+         1.0f, -1.0f, -1.0f,  // 2   
+        -1.0f,  1.0f, -1.0f,  // 3
+        -1.0f, -1.0f,  1.0f, // 4
+         1.0f, -1.0f,  1.0f,  // 5
+         1.0f,  1.0f,  1.0f,  // 6
+        -1.0f,  1.0f,  1.0f  // 7
+    };
+
+    std::vector<GLuint> indexes = { 0, 1, 2, 1, 0, 3, 4, 5, 6, 6, 7, 4, 7, 3, 0, 0, 4, 7, 6, 2, 1, 2, 6, 5, 0, 2, 5, 5, 4, 0, 3, 6, 1, 6, 3, 7 };
+    adj_indexes = makeAdjacencyIndexes(12, indexes);
+    
+    glGenVertexArrays(1, &adj_cubeVAO);
+    glGenBuffers(1, &adj_cubeVBO);
+    glGenBuffers(1, &adj_cubeEBO);
+
+    glBindVertexArray(adj_cubeVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, adj_cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(leastVertices), leastVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, adj_cubeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, adj_indexes.size() * sizeof(GLuint), &adj_indexes[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    glBindVertexArray(0);
+   
 
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &cubeVBO);
@@ -146,14 +196,21 @@ void scene_3::OnCreate()
     glBindVertexArray(0);
 }
 
-void render_scene(unsigned int cubeVAO)
+void scene_3::render_scene(unsigned int cubeVAO, GLenum param)
 {
     glBindVertexArray(cubeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    switch (param)
+    {
+    case GL_TRIANGLES:
+        glDrawArrays(param, 0, 36);
+        break;
+    case GL_TRIANGLES_ADJACENCY:
+        glDrawElements(param, (GLsizei)adj_indexes.size(), GL_UNSIGNED_INT, 0);
+    }
     glBindVertexArray(0);
 }
 
-void render(const Shader& shader, unsigned int cubeVAO, bool flag)
+void scene_3::render(const Shader& shader, unsigned int cubeVAO, bool flag, GLenum param)
 {
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(5.0f));
@@ -162,7 +219,7 @@ void render(const Shader& shader, unsigned int cubeVAO, bool flag)
     glDisable(GL_CULL_FACE);
     if (flag)
         shader.setInt("reverse_normals", 1);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
     if (flag)
         shader.setInt("reverse_normals", 0);
     glEnable(GL_CULL_FACE);
@@ -172,35 +229,35 @@ void render(const Shader& shader, unsigned int cubeVAO, bool flag)
     model = glm::translate(model, glm::vec3(4.0f, -3.5f, 0.0));
     model = glm::scale(model, glm::vec3(0.5f));
     shader.setMat4("model", model);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(2.0f, 3.0f, 1.0));
     model = glm::scale(model, glm::vec3(0.75f));
     shader.setMat4("model", model);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(-3.0f, -1.0f, 0.0));
     model = glm::scale(model, glm::vec3(0.5f));
     shader.setMat4("model", model);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(-1.5f, 1.0f, 1.5));
     model = glm::scale(model, glm::vec3(0.5f));
     shader.setMat4("model", model);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(-1.5f, 2.0f, -3.0));
     model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
     model = glm::scale(model, glm::vec3(0.75f));
     shader.setMat4("model", model);
-    render_scene(cubeVAO);
+    render_scene(cubeVAO, param);
 }
 
-void scene_3::OnUpdate()
+void scene_3::OnUpdate(float dt)
 {
     auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
     Camera& camera = handle.getCamera();
@@ -208,6 +265,7 @@ void scene_3::OnUpdate()
     Shader* shader      = assets.getShader("shader");
     Shader* depthShader = assets.getShader("depth");
     Shader* lightShader = assets.getShader("light");
+    Shader* silhouetteShader = assets.getShader("silhouette");
     Texture* diffuseMap = assets.getTexture("wood");
   
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -233,7 +291,7 @@ void scene_3::OnUpdate()
     }
     depthShader->setFloat("far_plane", far_plane);
     depthShader->setVec3("lightPos", lightPos);
-    render(*depthShader, cubeVAO, false);
+    render(*depthShader, cubeVAO, false, GL_TRIANGLES);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glViewport(0, 0, handle.getWidth(), handle.getHeight());
@@ -252,7 +310,7 @@ void scene_3::OnUpdate()
     diffuseMap->bindTexture();
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-    render(*shader, cubeVAO, true);
+    render(*shader, cubeVAO, true, GL_TRIANGLES);
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
@@ -262,6 +320,15 @@ void scene_3::OnUpdate()
     glBindVertexArray(lightVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
+
+
+    // TEST SILHOUETTE
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    silhouetteShader->use();
+    silhouetteShader->setVec3("colorSilhouette", glm::vec3(1.0, 0.0, 0.0));
+    silhouetteShader->setVec3("lightPos", lightPos);
+    render(*silhouetteShader, adj_cubeVAO, false, GL_TRIANGLES_ADJACENCY);
 }
 
 void scene_3::OnDispose()
@@ -270,6 +337,10 @@ void scene_3::OnDispose()
     glDeleteBuffers(1, &lightVBO);
     glDeleteVertexArrays(1, &cubeVAO);
     glDeleteBuffers(1, &cubeVBO);
+
+    glDeleteVertexArrays(1, &adj_cubeVAO);
+    glDeleteBuffers(1, &adj_cubeVBO);
+    glDeleteBuffers(1, &adj_cubeEBO);
 }
 
 const Assets& scene_3::getAssets() const {

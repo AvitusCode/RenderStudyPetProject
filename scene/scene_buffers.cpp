@@ -12,8 +12,16 @@ void scene_buffers::OnCreate()
     auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
     Camera& camera = handle.getCamera();
 
-    Shader* shader = new Shader(load_shader("res/shaders_scene_2/framebuffers.vert", "res/shaders_scene_2/framebuffers.frag"));
-    Shader* screenShader = new Shader(load_shader("res/shaders_scene_2/framebuffers_screen.vert", "res/shaders_scene_2/framebuffers_screen.frag"));
+    ShaderComponent vertexComponent;
+    ShaderComponent fragmentComponent;
+
+    vertexComponent.loadComponentFromFile("res/shaders_scene_2/framebuffers.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/shaders_scene_2/framebuffers.frag", GL_FRAGMENT_SHADER);
+    Shader* shader = new Shader(vertexComponent, fragmentComponent);
+
+    vertexComponent.loadComponentFromFile("res/shaders_scene_2/framebuffers_screen.vert", GL_VERTEX_SHADER);
+    fragmentComponent.loadComponentFromFile("res/shaders_scene_2/framebuffers_screen.frag", GL_FRAGMENT_SHADER);
+    Shader* screenShader = new Shader( vertexComponent, fragmentComponent );
     assets.storeShader(shader, "shader");
     assets.storeShader(screenShader, "screenShader");
 
@@ -166,7 +174,7 @@ void scene_buffers::OnCreate()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void scene_buffers::OnUpdate()
+void scene_buffers::OnUpdate(float dt)
 {
     auto& handle = *static_cast<WindowManager*>(glfwGetWindowUserPointer(window));
     Camera& camera = handle.getCamera();

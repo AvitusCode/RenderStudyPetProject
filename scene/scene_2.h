@@ -14,15 +14,20 @@ class scene_2 : public Scene
 public:
 	scene_2(GLFWwindow* win) : window(win), uniformBuffer(UniformBuffer(0)) {}
 	void OnCreate() override;
-	void OnUpdate() override;
+	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
 	const Assets& getAssets() const;
-
+private:
+	void updateMultiThread(size_t a, size_t b, glm::mat3 rotatingY);
 private:
 	GLFWwindow* window;
 	UniformBuffer uniformBuffer;
 	Assets assets;
+
+	glm::vec3 planetPos;
+	std::vector<glm::mat4> modelMatrices;
+	std::vector<glm::vec3> rocks_pos;
 
 	unsigned int amount;
 	Model* _rock = nullptr;

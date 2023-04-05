@@ -28,6 +28,40 @@ struct Vertex
 };
 #pragma pack(pop)
 
+class Edge
+{
+public:
+	Edge(GLuint f, GLuint t) : from(f), to(t) {}
+
+	void setFrom(GLuint f) {
+		from = f;
+	}
+
+	void setTo(GLuint t) {
+		to = t;
+	}
+
+	GLuint getFrom() const {
+		return from;
+	}
+
+	GLuint getTo() const {
+		return to;
+	}
+
+private:
+	GLuint from;
+	GLuint to;
+};
+
+bool operator==(const Edge& lhs, const Edge& rhs);
+bool operator<(const Edge& lhs, const Edge& rhs);
+
+// Making new adjacency topology
+// @param numTris - count of triangles
+// @param srsIndexes - indexes od source mesh
+[[nodiscard]] std::vector<GLuint> makeAdjacencyIndexes(GLuint numTris, const std::vector<GLuint>& srcIndexes);
+
 // A mesh is any 3D object that contains vertices data, and may contain normals, textures & materials, indices etc.
 class Mesh : public Core
 {
@@ -56,7 +90,6 @@ public:
 
 	GLuint getVAO() const;
 	const std::vector<unsigned int>& getIndices() const;
-
 protected:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;

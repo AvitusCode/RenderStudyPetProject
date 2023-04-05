@@ -1,8 +1,68 @@
 #include "Mesh.h"
 #include <iostream>
+#include <unordered_map>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
+bool operator==(const Edge& lhs, const Edge& rhs) {
+	return lhs.getFrom() == rhs.getFrom() && lhs.getTo() == rhs.getTo();
+}
+
+bool operator<(const Edge& lhs, const Edge& rhs)
+{
+	if (lhs.getFrom() < rhs.getFrom()) {
+		return true;
+	}
+
+	if (lhs.getFrom() > rhs.getFrom()) {
+		return false;
+	}
+
+	return lhs.getTo() < rhs.getTo();
+}
+
+struct adjHash {
+	size_t operator()(const Edge& edge) const noexcept
+	{
+		const size_t x = 2'946'901;
+		const auto uiHash = std::hash<GLuint>{};
+		return uiHash(edge.getFrom()) * x + uiHash(edge.getTo());
+	}
+};
+
+[[nodiscard]] std::vector<GLuint> makeAdjacencyIndexes(GLuint numTris, const std::vector<GLuint>& srcIndexes)
+{
+	assert(3 * numTris == srcIndexes.size());
+
+	const GLuint n = 3 * numTris;
+	std::vector<GLuint> result(2 * n);
+	std::unordered_map<Edge, GLuint, adjHash> adj;
+
+	for (GLuint i = 0; i < numTris; i++)
+	{
+		const GLuint j = 3 * i;
+		adj[Edge{ srcIndexes[j], srcIndexes[j + 1] }] = srcIndexes[j + 2];
+		adj[Edge{ srcIndexes[j + 1], srcIndexes[j + 2] }] = srcIndexes[j];
+		adj[Edge{ srcIndexes[j + 2], srcIndexes[j] }] = srcIndexes[j + 1];
+	}
+
+	for (GLuint i = 0; i < numTris; i++)
+	{
+		const GLuint j = 6 * i;
+		const GLuint k = 3 * i;
+
+		result[j] = srcIndexes[k];
+		result[j + 2] = srcIndexes[k + 1];
+		result[j + 4] = srcIndexes[k + 2];
+
+		result[j + 1] = adj[Edge{ srcIndexes[k + 1], srcIndexes[k] }];
+		result[j + 3] = adj[Edge{ srcIndexes[k + 2], srcIndexes[k + 1] }];
+		result[j + 5] = adj[Edge{ srcIndexes[k], srcIndexes[k + 2] }];
+	}
+
+	return result;
+}
 
 Mesh::Mesh()
 {
@@ -47,13 +107,17 @@ void Mesh::drawObject() const
 		size_t specularNr = 1;
 		size_t normalNr = 1;
 		size_t heightNr = 1;
+		size_t roughnessNr = 1;
+		size_t aoNr = 1;
+
 		size_t textureNr = 1;
 
 		for (size_t i = 0; i < textures.size(); i++)
 		{
-			glActiveTexture(GL_TEXTURE0 + i);
 			std::string number;
 			std::string name = textures[i].getType();
+
+			// TODO: fix the problem with tex activation
 
 			if (name == "texture_diffuse"){
 				number = std::to_string(diffuseNr++);
@@ -70,26 +134,44 @@ void Mesh::drawObject() const
 			else if (name == "texture") {
 				number = std::to_string(textureNr++);
 			}
+			else if (name == "texture_roughness") {
+				number = std::to_string(roughnessNr++);
+			}
+			else if (name == "texture_ao") {
+				number = std::to_string(aoNr++);
+			}
+			else {
+				std::cout << "No such texture: " << name << std::endl;
+				continue;
+			}
 
-			glUniform1i(glGetUniformLocation(shaderProgramID, (name + number).c_str()), i);
+			int locationId = glGetUniformLocation(shaderProgramID, (name + number).c_str());
+			if (locationId == -1) {
+				continue;
+			}
+
+			glUniform1i(locationId, i);
+			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, textures[i].getId());
 		}
 	}
 
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgramID, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
 
+	if (m_mode == GL_PATCHES) {
+		glPatchParameteri(GL_PATCH_VERTICES, 1);
+	}
+
 	if (indices.size() == 0){
-		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size() * sizeof(float));
+		glDrawArrays(m_mode, 0, (GLsizei)vertices.size() * sizeof(float));
 	}
 	else{
-		glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(m_mode, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
 	}
 }
 
 void Mesh::setupObject()
 {
-	size_t attrib = 0;
-
 	if (VAO || VBO || EBO)
 	{
 		glDeleteVertexArrays(1, &VAO);
@@ -114,28 +196,28 @@ void Mesh::setupObject()
 	}
 
 	if (!config[0]) {
-		glEnableVertexAttribArray(attrib);
-		glVertexAttribPointer(attrib++, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 	}
 
 	if (!config[1]) {
-		glEnableVertexAttribArray(attrib);
-		glVertexAttribPointer(attrib++, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
 	}
 
 	if (!config[2]) {
-		glEnableVertexAttribArray(attrib);
-		glVertexAttribPointer(attrib++, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
 	}
 
 	if (!config[3]) {
-		glEnableVertexAttribArray(attrib);
-		glVertexAttribPointer(attrib++, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
 	}
 
 	if (!config[4]) {
-		glEnableVertexAttribArray(attrib);
-		glVertexAttribPointer(attrib++, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 	}
 
 	glBindVertexArray(0);

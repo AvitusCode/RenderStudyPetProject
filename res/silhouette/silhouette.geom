@@ -37,7 +37,7 @@ void main()
     vec3 e5 = WorldPos[4] - WorldPos[2];
     vec3 e6 = WorldPos[5] - WorldPos[0];
 
-    vec3 lightDir = lightPos - WorldPos[0];
+    vec3 lightDir = normalize(lightPos - WorldPos[0]);
     vec3 Normal = cross(e1, e2);
 
     if (dot(Normal, lightDir) > EPS)
@@ -48,13 +48,13 @@ void main()
         }
 
         Normal = cross(e4, e5);
-        lightDir = lightPos - WorldPos[2];
+        lightDir = normalize(lightPos - WorldPos[2]);
         if (dot(Normal, lightDir) <= 0) {
             EmitLine(2, 4);
         }
 
         Normal = cross(e2, e6);
-        lightDir = lightPos - WorldPos[4];
+        lightDir = normalize(lightPos - WorldPos[4]);
         if (dot(Normal, lightDir) <= 0) {
             EmitLine(4, 0);
         }

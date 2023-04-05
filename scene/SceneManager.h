@@ -17,7 +17,7 @@ public:
         scenes.push_back(std::unique_ptr<Scene>(scene));
         named_scenes[name] = scenes.size() - 1;
     }
-    void OnUpdate();
+    void OnUpdate(float dt);
     void OnDispose();
     void SetScene(size_t id);
     void SetScene(const std::string& name);

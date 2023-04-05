@@ -2,10 +2,20 @@
 
 Renderer::Renderer(){
 	this->lightManager = {};
+	draw_mode = GL_TRIANGLES;
 }
 
 Renderer::Renderer(unsigned int lightShaderProgramID){
 	lightManager = LightManager(lightShaderProgramID);
+	draw_mode = GL_TRIANGLES;
+}
+
+void Renderer::setDrawMode(GLenum m) {
+	draw_mode = m;
+}
+
+GLenum Renderer::getDrawMode() const {
+	return draw_mode;
 }
 
 LightManager& Renderer::setLightManager() {
@@ -42,6 +52,7 @@ void Renderer::init()
 	// shader ID using the shaderMap table
 	for (Core* object : objects) {
 		object->setupObject();
+		object->setMode(draw_mode);
 	}
 }
 
