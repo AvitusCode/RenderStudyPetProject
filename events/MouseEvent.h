@@ -1,11 +1,11 @@
 #pragma once
-#include "Event.h"
+#include "EventComponent.h"
 
-class MouseMovedEvent : public Event
+class MouseMovedEvent : public EventComponent
 {
 public:
-	MouseMovedEvent(int _x, int _y) :
-		Event("MouseMovedEvent", Event::EventType::MOUSE_MOVE),
+	MouseMovedEvent(float _x, float _y) :
+		EventComponent("MouseMovedEvent", Events::Window::MOUSE),
 		x(_x),
 		y(_y) {}
 
@@ -13,24 +13,24 @@ public:
 		return m_name + ": " + std::to_string(x) + ", " + std::to_string(y);
 	}
 
-	int getX() const { 
+	float getX() const { 
 		return x; 
 	}
 
-	int getY() const {
+	float getY() const {
 		return y;
 	}
 
 private:
-	int x, y;
+	float x, y;
 };
 
-class MouseScrolledEvent : public Event
+class MouseScrolledEvent : public EventComponent
 {
 
 public:
 	MouseScrolledEvent(float offset) :
-		Event("MouseScrolledEvent", Event::EventType::MOUSE_SCROLL),
+		EventComponent("MouseScrolledEvent", Events::Window::SCROLL),
 		m_offset(offset) {}
 
 	std::string format() const override {

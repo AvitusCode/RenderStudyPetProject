@@ -8,6 +8,10 @@ class ShaderComponent
 {
 public:
     ShaderComponent() = default;
+    ShaderComponent(const ShaderComponent&) = delete;
+    ShaderComponent& operator=(const ShaderComponent&) = delete;
+    ShaderComponent(ShaderComponent&&) noexcept;
+    ShaderComponent& operator=(ShaderComponent&&) noexcept;
     ~ShaderComponent() noexcept;
 
     /**

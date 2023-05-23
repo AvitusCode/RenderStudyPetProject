@@ -8,6 +8,23 @@
 
 Shader::Shader() : ID(0), is_linked(false) {}
 
+Shader::Shader(Shader&& other) noexcept{
+    *this = std::move(other);
+}
+
+Shader& Shader::operator=(Shader&& other) noexcept
+{
+    if (this != &other)
+    {
+        deleteProgram();
+
+        is_linked = std::exchange(other.is_linked, false);
+        ID = std::exchange(other.ID, 0);
+    }
+
+    return *this;
+}
+
 Shader::~Shader() noexcept {
     deleteProgram();
 }
@@ -35,6 +52,9 @@ void Shader::deleteProgram() noexcept
     if (ID == 0) {
         return;
     }
+
+    // TODO: log
+    std::cout << "Deleting shaderProgram with ID " << ID << std::endl;
 
     glDeleteProgram(ID);
     is_linked = false;

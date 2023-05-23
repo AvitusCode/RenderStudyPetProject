@@ -1,6 +1,9 @@
 #pragma once
 #include <glad/glad.h>
-#include <iostream>
 
-GLenum glCheckError_(const char* file, int line);
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
+namespace gl_err
+{
+	GLenum glCheckError_(const char* file, int line);
+}
+
+#define glCheckError() gl_err::glCheckError_(__FILE__, __LINE__) 

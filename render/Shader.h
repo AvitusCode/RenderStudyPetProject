@@ -11,12 +11,47 @@ class Shader
 public:
     Shader();
 
+    Shader(const Shader&) = delete;
+    Shader& operator=(const Shader&) = delete;
+
+    Shader(Shader&&) noexcept;
+    Shader& operator=(Shader&&) noexcept;
+
     template<typename... Components>
-    Shader(const Components&... components);
+    Shader(Components&... scomponents);
 
     ~Shader() noexcept;
     // Активация шейдера
     void use() const;
+
+    // new architecture
+    template<typename T>
+    void set(const std::string& name, const T& value) const
+    {
+        GLint location = glGetUniformLocation(ID, name.c_str());
+        if (location == -1) {
+            return;
+        }
+
+        if constexpr (std::is_same_v<T, glm::vec2>) {
+            glUniform2fv(location, 1, &value[0]);
+        }
+        else if constexpr (std::is_same_v<T, glm::vec3>) {
+            glUniform3fv(location, 1, &value[0]);
+        }
+        else if constexpr (std::is_same_v<T, glm::vec4>) {
+            glUniform4fv(location, 1, &value[0]);
+        }
+        else if constexpr (std::is_same_v<T, glm::mat2>) {
+            glUniformMatrix2fv(location, 1, GL_FALSE, &value[0][0]);
+        }
+        else if constexpr (std::is_same_v<T, glm::mat3>) {
+            glUniformMatrix3fv(location, 1, GL_FALSE, &value[0][0]);
+        }
+        else if constexpr (std::is_same_v<T, glm::mat4>) {
+            glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
+        }
+    }
 
     // Полезные uniform-функции
     void setBool(const std::string& name, bool value) const;
@@ -42,15 +77,14 @@ public:
     void deleteProgram() noexcept;
     void createProgram();
 
-    unsigned int getId() const;
+    GLuint getId() const;
 private:
     GLuint ID = 0;
     bool is_linked = false;
 };
 
-
 template<typename... Components>
-Shader::Shader(const Components&... components) : ID(0), is_linked(false) 
+Shader::Shader(Components&... scomponents) : ID(0), is_linked(false)
 {
     if (sizeof...(Components) < 2) {
         return;
@@ -58,7 +92,7 @@ Shader::Shader(const Components&... components) : ID(0), is_linked(false)
 
     createProgram();
 
-    (addComponentToProgram(components), ...);
+    (addComponentToProgram(scomponents), ...);
 
     linkProgram();
 }

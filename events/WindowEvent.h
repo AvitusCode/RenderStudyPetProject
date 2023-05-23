@@ -1,12 +1,12 @@
 #pragma once
-#include "Event.h"
+#include "EventComponent.h"
 
 
-class WindowResizedEvent : public Event
+class WindowResizedEvent : public EventComponent
 {
 public:
 	WindowResizedEvent(int width, int height) :
-		Event("Window resize event", Event::EventType::WINDOW_RESIZE),
+		EventComponent("Window resize event", Events::Window::RESIZED),
 		m_width(width),
 		m_height(height) {}
 
@@ -26,10 +26,10 @@ private:
 	int m_width, m_height;
 };
 
-class WindowClosedEvent : public Event
+class WindowClosedEvent : public EventComponent
 {
 public:
-	WindowClosedEvent() : Event("Window Close Event", Event::EventType::WINDOW_CLOSE) {}
+	WindowClosedEvent() : EventComponent("Window Close Event", Events::Window::QUIT) {}
 	
 	std::string format() const override {
 		return m_name;

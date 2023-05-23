@@ -1,11 +1,11 @@
 #pragma once
-#include "Event.h"
+#include "EventComponent.h"
 
-class KeyPressedEvent : public Event
+class KeyPressedEvent : public EventComponent
 {
 public:
 	KeyPressedEvent(int key, int action) : 
-		Event("KeyPressedEvent", Event::EventType::KEY_PRESSED),
+		EventComponent("KeyPressedEvent", Events::Window::INPUT),
 		m_key(key),
 		m_action(action) {}
 
