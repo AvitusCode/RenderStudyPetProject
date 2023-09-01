@@ -1,6 +1,5 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
+#include "Application.hpp"
+#include "Utils/logger.h"
 #include <iostream>
 #include <chrono>
 
@@ -11,59 +10,39 @@
 #include "Display.h"
 #include "Gui/Interface.h"
 #include "Scenes/Demo1.h"
-
-constexpr int WINDOW_WIDTH = 1280;
-constexpr int WINDOW_HEIGHT = 720;
+#include "Scenes/Demo2.h"
 
 // TODO: Сделать интерфейс с возможностями
 /*
-1) Менять параметры тумана
-2) Добавлять объекты
-3) Открывать по ним файлы
-4) Frustum culing
-5) Quad tree
-6*) shadow mapping
+3) Добавление источников света на сцену
+4) Манипуляции с захваченным объектом
 */
+
+class DemoApp : public Application
+{
+private:
+	void OnInit() override
+	{
+		display_.setVerticalSinhronization(true);
+		SceneManager& sm = engine_.getSceneManager();
+		sm.emplaceScene<Demo1>("BackPack");
+		sm.emplaceScene<Demo2>("InstancedDrawAndThreadPoolTest");
+		sm.SetScene(0);
+
+		engine_.GuiInit();
+	}
+};
 
 int main()
 {
-    auto& jd_engine = jd::Engine::getEngine();
-	Display& display = Display::getDisplay();
-	display.init("jdEngine", WINDOW_WIDTH, WINDOW_HEIGHT);
-	display.setVerticalSinhronization(true);
+	jd::logging::InternalLogger::InitLog(jd::logging::DefaultLogFile);
 
-	SceneManager& sm = jd_engine.getSceneManager();
-	sm.emplaceScene<Demo1>("BackPack");
-	sm.SetScene(0);
-
-	jd_engine.GuiInit();
-
-	float dt = 0.0f;
-	while (!display.shouldClose())
-	{
-		const auto start_time = std::chrono::steady_clock::now();
-
-		sm.OnUpdate(dt);
-
-		jd_engine.GuiBegin();
-		jd::Interface::ProgMenu();
-		jd_engine.GuiEnd();
-
-		glCheckError();
-
-		display.updateFPS(glfwGetTime());
-		display.processRealTime();
-
-		display.update();
-		display.pollEvents();
-
-		const auto end_time = std::chrono::steady_clock::now();
-		dt = std::chrono::duration<float, std::chrono::seconds::period>(end_time - start_time).count();
-	}
-
-	jd_engine.GuiDispose();
-	display.shutdown();
-	jd_engine.Destroy();
+	LOG(INFO) << "jd render engine VERSION = 0.3b has started";
+	/*DemoApp demoApp;
+	demoApp.Run();*/
+	Application mainApp;
+	mainApp.Run();
+	LOG(INFO) << "Successfully end programm!";
 
 	return 0;
 }

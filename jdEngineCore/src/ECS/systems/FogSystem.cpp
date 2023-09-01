@@ -3,6 +3,27 @@
 #include "ECS/components/FogComponent.h"
 #include "ECS/components/Renderable.h"
 
+std::shared_ptr<FogSystem> FogSystem::getSystem()
+{
+	auto& jd_engine = jd::Engine::getEngine();
+	static bool sys_on = false;
+
+	if (!sys_on)
+	{
+		jd_engine.RegisterComponent<Renderable>();
+		jd_engine.RegisterComponent<FogComponent>();
+		auto fogSys = jd_engine.RegisterSystem<FogSystem>();
+		Signature signature;
+		signature.set(jd_engine.RegisterComponent<Renderable>());
+		signature.set(jd_engine.RegisterComponent<FogComponent>());
+		jd_engine.SetSystemSignature<FogSystem>(signature);
+		sys_on = true;
+		return fogSys;
+	}
+
+	return jd_engine.GetSystem<FogSystem>();
+}
+
 void FogSystem::OnInit()
 {
 

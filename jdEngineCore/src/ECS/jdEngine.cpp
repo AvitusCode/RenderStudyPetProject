@@ -22,6 +22,7 @@ namespace jd
 		mSceneManager = std::make_unique<SceneManager>();
 		mShaderManager = std::make_unique<ShaderManager>();
 		mSamplerManager = std::make_unique<SamplerManager>();
+		mModelManager = std::make_unique<ModelManager>();
 
 		is_init = true;
 	}
@@ -46,6 +47,10 @@ namespace jd
 
 	SamplerManager& Engine::getSamplerManager() {
 		return *mSamplerManager.get();
+	}
+
+	ModelManager& Engine::getModelManager() {
+		return *mModelManager.get();
 	}
 
 	// Entity methods

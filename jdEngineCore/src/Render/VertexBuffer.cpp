@@ -1,6 +1,6 @@
 #include "Render/VertexBuffer.h"
-#include <iostream>
-#include <cassert>
+#include "Utils/logger.h"
+#include "Utils/jd_string.h"
 
 VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
 {
@@ -34,11 +34,14 @@ void VertexBuffer::makeVBO(size_t reserveSizeBytes)
 
 	glGenBuffers(1, &m_bufferID);
 	m_rawData.reserve(reserveSizeBytes > 0 ? reserveSizeBytes : 1024);
+	DLOG(INFO) << "creating VertexBuffer with ID=" << m_bufferID << "; Type=" << m_bufferType << "; size=" << m_rawData.capacity();
 }
 
 void VertexBuffer::bindVBO(GLenum bufferType)
 {
-	assert(isBufferCreated() && "ERROR: buffer is not created");
+	if (!isBufferCreated()) {
+		LOG(FATAL) << "buffer is not created";
+	}
 
 	m_bufferType = bufferType;
 	glBindBuffer(bufferType, m_bufferID);
@@ -67,6 +70,8 @@ void VertexBuffer::addRawData(const void* ptrData, size_t dataSizeBytes, size_t 
 		memcpy(m_rawData.data() + m_bytesAdded, ptrData, dataSizeBytes);
 		m_bytesAdded += dataSizeBytes;
 	}
+
+	DLOG(INFO) << jd::fmt::print("Add raw data to buffer_id=%ul, size=%ull", m_bufferID, allBytes);
 }
 
 
@@ -77,11 +82,16 @@ void* VertexBuffer::getRawDataPointer() {
 
 void VertexBuffer::uploadDataToGPU(GLenum usageHint, bool clear)
 {
-	assert(isBufferCreated() && "ERROR: buffer is not created");
+	if (!isBufferCreated()) {
+		LOG(FATAL) << "buffer is not created";
+	}
 
 	glBufferData(m_bufferType, m_bytesAdded, m_rawData.data(), usageHint);
 	m_uploadedDataSize = m_bytesAdded;
 	m_bytesAdded = 0;
+
+	DLOG(INFO) << jd::fmt::print("Load raw data to GPU from buffer_id=%ul, size=%ull, delete on RAM %s", 
+		m_bufferID, m_rawData.size(), clear ? "true" : "false");
 
 	if (clear) {
 		m_rawData.clear();
@@ -114,11 +124,11 @@ size_t VertexBuffer::getBufferSize() {
 void VertexBuffer::deleteVBO() noexcept
 {
 	if (!isBufferCreated()) {
+		DLOG(WARNING) << "VBO has already deleted!";
 		return;
 	}
 
-	// TODO: log
-	std::cout << "Delete VBO: " << m_bufferID << "; Type: " << m_bufferType << std::endl;
+	DLOG(INFO) << "Delete VBO with ID=" << m_bufferID << "; Type=" << m_bufferType << std::endl;
 
 	glDeleteBuffers(1, &m_bufferID);
 	m_rawData.clear();

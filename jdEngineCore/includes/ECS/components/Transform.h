@@ -23,6 +23,7 @@ struct Transform
 		return m_modelMatrix;
 	}
 
+
 	const glm::vec3& getGlobalPosition() const {
 		return m_modelMatrix[3];
 	}

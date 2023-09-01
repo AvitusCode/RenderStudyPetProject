@@ -433,7 +433,7 @@ namespace Primitives
 
     bool Sphere::isOnFrustum(const Frustum& camFrustum, const Transform& transform) const
     {
-        const glm::vec3 globalCenter{ transform.computeModelMatrix() * glm::vec4(center, 1.f) };
+        const glm::vec3 globalCenter{ transform.computeModelMatrix() * glm::vec4(center, 1.0f) };
         const glm::vec3 globalScale = transform.getGlobalScale();
         const float maxScale = std::max(std::max(globalScale.x, globalScale.y), globalScale.z);
 
@@ -464,7 +464,7 @@ namespace Primitives
     bool SquareAABB::isOnFrustum(const Frustum& camFrustum, const Transform& transform) const
     {
         //Get global scale thanks to our transform
-        const glm::vec3 globalCenter{ transform.computeModelMatrix() * glm::vec4(center, 1.f) };
+        const glm::vec3 globalCenter{ transform.computeModelMatrix() * glm::vec4(center, 1.0f) };
 
         // Scaled orientation
         const glm::vec3 right = transform.getRight() * extent;
@@ -584,7 +584,7 @@ namespace Primitives
     AABB generateAABB(const Model& model)
     {
         glm::vec3 minAABB = glm::vec3(std::numeric_limits<float>::max());
-        glm::vec3 maxAABB = glm::vec3(std::numeric_limits<float>::min());
+        glm::vec3 maxAABB = glm::vec3(-std::numeric_limits<float>::max());
 
         for (auto&& mesh : model.meshes)
         {
@@ -606,7 +606,7 @@ namespace Primitives
     Sphere generateSphereBV(const Model& model)
     {
         glm::vec3 minAABB = glm::vec3(std::numeric_limits<float>::max());
-        glm::vec3 maxAABB = glm::vec3(std::numeric_limits<float>::min());
+        glm::vec3 maxAABB = glm::vec3(-std::numeric_limits<float>::max());
 
         for (auto&& mesh : model.meshes)
         {

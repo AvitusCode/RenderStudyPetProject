@@ -129,14 +129,10 @@ std::vector<const Texture*> loadMaterialTextures(aiMaterial* mat, aiTextureType 
 }
 
 
-AssimpModel loadModel(const std::string& path)
+std::unique_ptr<AssimpModel> loadModel(const std::string& path, unsigned int flag)
 {
 	Assimp::Importer import;
-	const aiScene* scene = import.ReadFile(path,
-		aiProcess_Triangulate |
-		aiProcess_FlipUVs |
-		aiProcess_CalcTangentSpace |
-		aiProcess_GenSmoothNormals);
+	const aiScene* scene = import.ReadFile(path, flag);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
 	{
@@ -144,9 +140,9 @@ AssimpModel loadModel(const std::string& path)
 		throw std::runtime_error(msg.c_str());
 	}
 
-	AssimpModel resultModel;
-	resultModel.directory = path.substr(0, path.find_last_of('/'));
-	processNode(scene->mRootNode, scene, resultModel);
+	std::unique_ptr<AssimpModel> resultModel = std::make_unique<AssimpModel>();
+	resultModel->directory = path.substr(0, path.find_last_of('/'));
+	processNode(scene->mRootNode, scene, *resultModel);
 
 	return resultModel;
 }
@@ -157,6 +153,7 @@ bool setUpStaticMesh(Mesh3D& mesh, Renderable& renderable)
 {
 	RenderComponent rc;
 	for (auto& tex : mesh.textures) {
+		tex->complete();
 		rc.textures.push_back(tex);
 	}
 

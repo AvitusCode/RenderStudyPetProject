@@ -2,6 +2,7 @@
 #include "Texture.h"
 #include <memory>
 #include <unordered_map>
+#include <shared_mutex>
 
 class TextureManager
 {
@@ -11,7 +12,7 @@ public:
     void operator=(const TextureManager&) = delete;
 
     void loadTexture2D(const std::string& key, const std::string& fileName, const std::string& type = "", bool generateMipmaps = true);
-    const Texture* getTexture(const std::string& key) const;
+    [[nodiscard]] const Texture* getTexture(const std::string& key) const;
     bool containsTexture(const std::string& key) const;
     std::string containsTextureWithPath(const std::string& filePath) const;
     bool deleteTexture(const std::string& key);
@@ -19,4 +20,5 @@ public:
 
 private:
     std::unordered_map<std::string, std::unique_ptr<Texture>> _textureCache; // Texture cache
+    mutable std::shared_mutex _mtx;
 };

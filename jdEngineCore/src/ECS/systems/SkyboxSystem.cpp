@@ -5,14 +5,33 @@
 #include "Render/UniformBuffer.h"
 #include "GL_ERROR.h"
 
+std::shared_ptr<SkyboxSystem> SkyboxSystem::getSystem()
+{
+	auto& jd_engine = jd::Engine::getEngine();
+	static bool sys_on = false;
+
+	if (!sys_on)
+	{
+		auto skySys = jd_engine.RegisterSystem<SkyboxSystem>();
+		jd_engine.RegisterComponent<SkyboxComponent>();
+		Signature signature;
+		signature.set(jd_engine.GetComponentType<SkyboxComponent>());
+		jd_engine.SetSystemSignature<SkyboxSystem>(signature);
+		sys_on = true;
+		return skySys;
+	}
+
+	return jd_engine.GetSystem<SkyboxSystem>();
+}
+
 void SkyboxSystem::OnInit()
 {
-	// only one skybox in current rende time
+	// only one skybox in current render time
 	ShaderComponent vertexShader, fragmentShader;
 	vertexShader.loadComponentFromFile(ROOT_DIR "res/skybox/skybox.vert", GL_VERTEX_SHADER);
 	fragmentShader.loadComponentFromFile(ROOT_DIR "res/skybox/skybox.frag", GL_FRAGMENT_SHADER);
 
-	skyShader = new Shader{ vertexShader, fragmentShader };
+	skyShader = std::make_unique<Shader>(vertexShader, fragmentShader);
 	
 	skyShader->use();
 	skyShader->setInt("skybox", 1);
@@ -24,6 +43,9 @@ void SkyboxSystem::OnUpdate(float dt)
 {
 	// only one skybox in current rende time
 	auto& jd_engine = jd::Engine::getEngine();
+	if (mEntities.empty()) {
+		return;
+	}
 	Entity skybox = *mEntities.begin();
 
 	const auto& skyComponent = jd_engine.GetComponent<SkyboxComponent>(skybox);
@@ -51,6 +73,4 @@ void SkyboxSystem::OnDispose()
 
 	glDeleteVertexArrays(1, &skyComponent.VAO);
 	glDeleteTextures(1, &skyComponent.texId);
-
-	delete skyShader;
 }

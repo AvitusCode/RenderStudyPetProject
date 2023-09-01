@@ -4,11 +4,11 @@
 #include <glm/glm.hpp>
 
 #include <string>
-#include <iostream>
+#include "Utils/logger.h"
 
 Shader::Shader() : ID(0), is_linked(false) {}
 
-Shader::Shader(Shader&& other) noexcept{
+Shader::Shader(Shader&& other) noexcept {
     *this = std::move(other);
 }
 
@@ -45,6 +45,7 @@ void Shader::createProgram() {
     }
 
     ID = glCreateProgram();
+    LOG(INFO) << "creating shader programm with ID=" << ID;
 }
 
 void Shader::deleteProgram() noexcept
@@ -54,7 +55,7 @@ void Shader::deleteProgram() noexcept
     }
 
     // TODO: log
-    std::cout << "Deleting shaderProgram with ID " << ID << std::endl;
+    LOG(INFO) << "Deleting shaderProgram with ID " << ID;
 
     glDeleteProgram(ID);
     is_linked = false;
@@ -133,7 +134,7 @@ bool Shader::linkProgram()
 
     if (!is_linked)
     {
-        std::cerr << "ERROR: link program failuare with ID = " << ID << std::endl;
+        LOG(ERROR) << "link program failuare with ID=" << ID;
 
         GLint logStatus = 0;
         glGetProgramiv(ID, GL_INFO_LOG_LENGTH, &logStatus);
@@ -142,7 +143,7 @@ bool Shader::linkProgram()
         {
             GLchar* logMessage = new GLchar[logStatus];
             glGetProgramInfoLog(ID, logStatus, nullptr, logMessage);
-            std::cerr << "Log message: \n\n" << logMessage << std::endl;
+            LOG(ERROR) << logMessage;
             delete[] logMessage;
         }
 

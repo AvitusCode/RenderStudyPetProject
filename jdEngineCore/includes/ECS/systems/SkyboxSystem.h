@@ -1,5 +1,6 @@
 #pragma once
 #include "../System.h"
+#include <memory>
 
 class Shader;
 
@@ -10,6 +11,8 @@ public:
 	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
+	static std::shared_ptr<SkyboxSystem> getSystem();
+
 private:
-	Shader* skyShader;
+	std::unique_ptr<Shader> skyShader;
 };

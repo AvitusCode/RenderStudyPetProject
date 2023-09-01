@@ -75,7 +75,6 @@ namespace Primitives
         glm::vec2 m_textures[MAX_VERTICES] = { glm::vec2(0.0f, 0.0f) };
     };
 
-
     // Primitives version 2.0
 
     struct Plane
@@ -134,7 +133,7 @@ namespace Primitives
 		float extent{ 0.f };
 
         SquareAABB(const glm::vec3& inCenter, float inExtent);
-        bool isOnOrForwardPlane(const Plane& plane) const final;
+        bool isOnOrForwardPlane(const Plane& plane) const override final;
         bool isOnFrustum(const Frustum& camFrustum, const Transform& transform) const override final;
 	};
 
@@ -147,7 +146,7 @@ namespace Primitives
         AABB(const glm::vec3& inCenter, float iI, float iJ, float iK);
         std::array<glm::vec3, 8> getVertice() const;
         bool isOnOrForwardPlane(const Plane& plane) const override final;
-        bool isOnFrustum(const Frustum& camFrustum, const Transform& transform) const final;
+        bool isOnFrustum(const Frustum& camFrustum, const Transform& transform) const override final;
 	};
 
     Frustum createFrustumFromCamera(Entity cam_id, float aspect, float fovY, float zNear, float zFar);

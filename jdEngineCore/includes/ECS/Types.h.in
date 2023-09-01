@@ -1,3 +1,4 @@
 #pragma once
 #cmakedefine ROOT_INFO
 #cmakedefine ROOT_DIR "@ROOT_DIR@"
+#define THREADS_NUM 4

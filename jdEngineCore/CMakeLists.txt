@@ -7,7 +7,7 @@ else()
     set(ROOT_DIR "")
 endif()
 
-configure_file(includes/ECS/Types.h.in includes/ECS/Types.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/includes/ECS/Types.h.in ${CMAKE_CURRENT_SOURCE_DIR}/includes/ECS/Types.h)
 
 set(ENGINE jdEngineCore)
 
@@ -32,6 +32,10 @@ set(ENGINE_SRC
         src/Gui/jdGui.cpp
         src/Models/Model.cpp
         src/Models/Terrain.cpp
+        src/Models/ModelManager.cpp
+        src/Math/Bounder.cpp
+        src/Math/VolumeAABB.cpp
+        src/Math/VolumeSphere.cpp
         src/Render/Primitives.cpp
         src/Render/Sampler.cpp
         src/Render/SamplerManager.cpp
@@ -42,10 +46,19 @@ set(ENGINE_SRC
         src/Render/TextureManager.cpp
         src/Render/UniformBuffer.cpp
         src/Render/VertexBuffer.cpp
+        src/Render/RenderBuffer.cpp
+        src/Render/FrameBuffer.cpp
+        src/Render/Grid.cpp
         src/Scenes/Demo1.cpp
+        src/Scenes/Demo2.cpp
+        src/Scenes/AppScene.cpp
         src/Scenes/SceneManager.cpp
         src/Utils/stb_image.cpp
         src/Utils/Timer.cpp
+        src/Utils/topology.cpp
+        src/Utils/ThreadPool.cpp
+        src/Utils/File.cpp
+        src/Utils/logger.cpp
         src/Display.cpp
         src/GL_ERROR.cpp
 )

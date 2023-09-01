@@ -2,22 +2,27 @@
 #include "ECS/components/Transform.h"
 #include "ECS/components/Camera.h"
 #include "ECS/jdEngine.h"
+#include "Utils/logger.h"
+#include "Utils/jd_string.h"
 
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
+#include "Events/EntityCreationEvent.h"
 #include "Display.h"
 
-std::shared_ptr<CameraControlSystem> CameraControlSystem::getCameraControlSystem()
+std::shared_ptr<CameraControlSystem> CameraControlSystem::getSystem()
 {
 	auto& jd_engine = jd::Engine::getEngine();
 	static bool sys_on = false;
 
 	if (!sys_on)
 	{
+		jd_engine.RegisterComponent<Transform>();
+		jd_engine.RegisterComponent<Camera>();
 		auto cameraSys = jd_engine.RegisterSystem<CameraControlSystem>();
 		Signature signature;
-		signature.set(jd_engine.GetComponentType<Transform>());
-		signature.set(jd_engine.GetComponentType<Camera>());
+		signature.set(jd_engine.RegisterComponent<Transform>());
+		signature.set(jd_engine.RegisterComponent<Camera>());
 		jd_engine.SetSystemSignature<CameraControlSystem>(signature);
 		sys_on = true;
 		return cameraSys;
@@ -32,6 +37,7 @@ void CameraControlSystem::OnInit()
 	jd_engine.AddEventListener(METHOD_LISTENER(Events::Window::INPUT, CameraControlSystem::InputListener));
 	jd_engine.AddEventListener(METHOD_LISTENER(Events::Window::MOUSE, CameraControlSystem::MouseListener));
 	jd_engine.AddEventListener(METHOD_LISTENER(Events::Window::SCROLL, CameraControlSystem::ScrollListener));
+	jd_engine.AddEventListener(METHOD_LISTENER(Events::Creation::TRANSFORM, CameraControlSystem::TransformListener));
 
 	for (auto& entity : mEntities)
 	{
@@ -158,4 +164,26 @@ void CameraControlSystem::ScrollListener(EventComponent* event)
 			camera.Zoom = 45.0f;
 		}
 	}
+}
+
+void CameraControlSystem::TransformListener(EventComponent* event)
+{
+	EntityTransformEvent* transform_event = static_cast<EntityTransformEvent*>(event);
+	auto entity = transform_event->getEntity();
+	
+	auto camEntity = *mEntities.begin();
+	auto& jd_engine = jd::Engine::getEngine();
+	auto& camera = jd_engine.GetComponent<Camera>(camEntity);
+	auto& transformCam = jd_engine.GetComponent<Transform>(camEntity);
+	auto& transformEnt = jd_engine.GetComponent<Transform>(entity);
+
+	const jd::Quaternion qF = (camera.orientation * jd::Quaternion::identity(0.0f, 0.0f, -1.0f, 0.0f)) * camera.orientation.conjugate();
+	const glm::vec3 Front = qF;
+
+	// Put new model exactly infont of the camera
+	transformEnt.position = transformCam.position;
+	LOG(INFO) << jd::fmt::print("New object pos: (%f, %f, %f)", transformEnt.position.x, transformEnt.position.y, transformEnt.position.z);
+
+	EntityCreationEvent next_event{ entity };
+	jd_engine.SendEvent(&next_event);
 }

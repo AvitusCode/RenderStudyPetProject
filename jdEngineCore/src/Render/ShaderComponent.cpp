@@ -1,5 +1,5 @@
 #include "Render/ShaderComponent.h"
-#include <iostream>
+#include "Utils/logger.h"
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -45,6 +45,7 @@ bool ShaderComponent::loadComponentFromFile(const std::string& fileName, GLenum 
 	}
 
 	m_shaderID = glCreateShader(shaderType);
+	LOG(INFO) << "Creating shader with id=" << m_shaderID;
 	glShaderSource(m_shaderID, static_cast<GLsizei>(fileLines.size()), programSource.data(), nullptr);
 	glCompileShader(m_shaderID);
 
@@ -53,7 +54,7 @@ bool ShaderComponent::loadComponentFromFile(const std::string& fileName, GLenum 
 
 	if (compileStatus == GL_FALSE)
 	{
-		std::cerr << "ERROR: compile fail in" << fileName << std::endl;
+		LOG(ERROR) << "compile fail in " << fileName;
 
 		GLint logStatus = 0;
 		glGetShaderiv(m_shaderID, GL_INFO_LOG_LENGTH, &logStatus);
@@ -62,7 +63,7 @@ bool ShaderComponent::loadComponentFromFile(const std::string& fileName, GLenum 
 		{
 			GLchar* logMessage = new GLchar[logStatus];
 			glGetShaderInfoLog(m_shaderID, logStatus, nullptr, logMessage);
-			std::cerr << "Compile message :\n\n" << logMessage << std::endl;
+			LOG(ERROR) << logMessage;
 			delete[] logMessage;
 		}
 
@@ -84,8 +85,7 @@ void ShaderComponent::deleteComponent() noexcept
 		return;
 	}
 
-	// TODO: log
-	std::cout << "Deleting shader with ID " << m_shaderID << std::endl;
+	LOG(INFO) << "Deleting shader with id=" << m_shaderID;
 
 	glDeleteShader(m_shaderID);
 	m_isCompiled = false;
@@ -106,7 +106,7 @@ bool getLinesFromShader(const std::string& fileName, std::vector<std::string>& r
 
 	if (!file.good() || !file.is_open()) 
 	{
-		std::cerr << "Open shader file error" << std::endl;
+		LOG(ERROR) << "Open shader file error";
 		return false;
 	}
 
@@ -160,17 +160,19 @@ bool getLinesFromShader(const std::string& fileName, std::vector<std::string>& r
 					}
 				}
 
-				const auto combinedIncludeFilePath = directory + sFinalFileName;
+				std::string combinedIncludeFilePath = directory + sFinalFileName;
 				if (has_include.find(combinedIncludeFilePath) == has_include.end())
 				{
 					has_include.insert(combinedIncludeFilePath);
-					getLinesFromShader(directory + sFinalFileName, result, has_include, true);
+					if (!getLinesFromShader(combinedIncludeFilePath, result, has_include, true)) {
+						return false;
+					}
 				}
 			}
 			else
 			{
-				std::string msg = "incorrect #include format: " + includeFileName;
-				throw std::runtime_error(msg.c_str());
+				LOG(ERROR) << "incorrect #include format: " + includeFileName;
+				return false;
 			}
 		}
 		else if (firstToken == "#include_part") {

@@ -10,6 +10,7 @@
 #include "Render/SamplerManager.h"
 #include "Render/ShaderManager.h"
 #include "Scenes/SceneManager.h"
+#include "Models/ModelManager.h"
 
 #include <memory>
 
@@ -39,7 +40,7 @@ namespace jd
 
 		// Component methods
 		template<typename T>
-		void RegisterComponent();
+		ComponentType RegisterComponent();
 
 		template<typename T>
 		void AddComponent(Entity entity, T component);
@@ -71,6 +72,7 @@ namespace jd
 		TextureManager& getTextureManager();
 		ShaderManager& getShaderManager();
 		SamplerManager& getSamplerManager();
+		ModelManager& getModelManager();
 
 		// Gui methods
 		static void GuiInit();
@@ -94,6 +96,7 @@ namespace jd
 		std::unique_ptr<SceneManager> mSceneManager;
 		std::unique_ptr<ShaderManager> mShaderManager;
 		std::unique_ptr<SamplerManager> mSamplerManager;
+		std::unique_ptr<ModelManager> mModelManager;
 
 		bool is_init = false;
 		inline static bool CONSOLE_DEBUG_MODE = false;
@@ -101,8 +104,8 @@ namespace jd
 
 	// IMPLEMENTATION
 	template<typename T>
-	void Engine::RegisterComponent() {
-		mComponentManager->RegisterComponent<T>();
+	ComponentType Engine::RegisterComponent() {
+		return mComponentManager->RegisterComponent<T>();
 	}
 
 	template<typename T>

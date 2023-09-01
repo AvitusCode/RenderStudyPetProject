@@ -28,6 +28,17 @@ Shader& ShaderManager::getShaderProgram(const std::string& key) const
     return *shader_cashe.at(key);
 }
 
+void ShaderManager::deleteShaderProgram(const std::string& key)
+{
+    if (!containsShaderProgram(key))
+    {
+        std::string msg = "Attempting to get non-existing shader program with key '" + key + "'!";
+        throw std::runtime_error(msg.c_str());
+    }
+
+    shader_cashe.erase(key);
+}
+
 bool ShaderManager::containsShaderProgram(const std::string& key) const
 {
     return shader_cashe.count(key) > 0;

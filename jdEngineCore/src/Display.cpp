@@ -9,6 +9,10 @@
 
 int Display::init(std::string const& windowTitle, unsigned int WINDOW_WIDTH, unsigned int WINDOW_HEIGHT)
 {
+	if (mWindow) {
+		std::cerr << "ERROR" << std::endl; // log it
+		return -1;
+	}
 	windowWidth = WINDOW_WIDTH;
 	windowHeight = WINDOW_HEIGHT;
 

@@ -16,7 +16,7 @@ public:
 	void OnInit() override;
 	void OnUpdate(float dt) override;
 	void OnDispose() override;
-	static std::shared_ptr<CameraControlSystem> getCameraControlSystem();
+	static std::shared_ptr<CameraControlSystem> getSystem();
 
 private:
 	float last_xoffset = 0;
@@ -30,6 +30,7 @@ private:
 	void InputListener(EventComponent* event);
 	void MouseListener(EventComponent* event);
 	void ScrollListener(EventComponent* event);
+	void TransformListener(EventComponent* event);
 
 	void updateCameraVectors(jd::Quaternion& orientation, float RightAngle, float UpAngle);
 };

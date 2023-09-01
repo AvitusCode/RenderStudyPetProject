@@ -1,10 +1,14 @@
 #pragma once
-#include <string>
 #include <glad/glad.h>
+#include <string>
+#include <functional>
+#include "Utils/stb_image.h"
+
 
 class Texture
 {
 public:
+    using tex_completer_cb = std::function<bool()>;
     Texture() = default;
 
     Texture(const Texture&) = delete;
@@ -25,6 +29,7 @@ public:
      *
      * @return True, if texture has been loaded correctly or false otherwise.
      */
+    void complete() const;
     bool createFromData(const unsigned char* data, GLsizei width, GLsizei height, GLenum format, bool generateMipmaps = false);
     bool loadTexture2D(const std::string& filePath, bool generateMipmaps = true);
     void bind(GLenum textureUnit = 0) const;
@@ -51,6 +56,8 @@ private:
 
     std::string m_texture_type{ 0 }; // type of texture sample
     std::string m_filePath{ 0 }; // Path of file from which the texture has been loaded (might be empty, if texture was simply created from data)
+
+    tex_completer_cb tex_completer;
 
     bool isLoadedCheck() const;
 };

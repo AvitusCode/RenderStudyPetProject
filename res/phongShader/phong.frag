@@ -53,7 +53,6 @@ void main()
     FragColor = vec4(result, 1.0) * texture(texture_diffuse1, gs_inputs.TexCoords);
 
     // experimental Fog
-    float fogCoordinates = abs(eyeSpaceCoords.z / eyeSpaceCoords.w);
-
-    FragColor = mix(FragColor, vec4(fogStruct.color, 1.0), getFogFactorExp2(fogStruct, fogCoordinates));
+    // float fogCoordinates = abs(eyeSpaceCoords.z / eyeSpaceCoords.w);
+    // FragColor = mix(FragColor, vec4(fogStruct.color, 1.0), getFogFactorExp2(fogStruct, fogCoordinates));
 }

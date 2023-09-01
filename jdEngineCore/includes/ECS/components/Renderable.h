@@ -20,6 +20,9 @@ struct RenderComponent
 struct Renderable
 {
 	std::vector<RenderComponent> rdata;
-	GLuint primitiveRestartIndx = 0;
+	union {
+		GLuint primitiveRestartIndx;
+		GLuint instansedCount;
+	};
 	const Shader* shader = nullptr;
 };

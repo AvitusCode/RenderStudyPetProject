@@ -25,6 +25,12 @@ public:
 	 * @return Shader program instance from a specified key.
 	 */
 	Shader& getShaderProgram(const std::string& key) const;
+
+	/**
+	* Deleting shader program with a specific key
+	* @param key Key to get shader program from
+	*/
+	void deleteShaderProgram(const std::string& key);
 private:
 	/**
 	 * Checks, if shader program with specified key exists.

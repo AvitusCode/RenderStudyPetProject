@@ -3,6 +3,25 @@
 #include "ECS/components/Renderable.h"
 #include "ECS/components/Material.h"
 
+std::shared_ptr<MaterialSystem> MaterialSystem::getSystem()
+{
+	auto& jd_engine = jd::Engine::getEngine();
+	static bool sys_on = false;
+
+	if (!sys_on)
+	{
+		jd_engine.RegisterComponent<Renderable>();
+		jd_engine.RegisterComponent<Material>();
+		jd_engine.RegisterSystem<MaterialSystem>();
+		Signature signature;
+		signature.set(jd_engine.RegisterComponent<Renderable>());
+		signature.set(jd_engine.RegisterComponent<Material>());
+		jd_engine.SetSystemSignature<MaterialSystem>(signature);
+		sys_on = true;
+	}
+
+	return jd_engine.GetSystem<MaterialSystem>();
+}
 
 void MaterialSystem::OnInit()
 {

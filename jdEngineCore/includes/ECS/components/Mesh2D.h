@@ -4,6 +4,7 @@
 #include <vector>
 #include "Render/Texture.h"
 #include "Render/Primitives.h"
+#include <memory>
 
 enum class TYPE : uint8_t
 {
@@ -25,6 +26,6 @@ struct Mesh2D
 	inline static GLuint texture_attrib = 1;
 
 	glm::mat4 Model;
-	Primitives::Shape2D* shape = nullptr;
+	std::unique_ptr<Primitives::Shape2D> shape = nullptr;
 	TYPE type = TYPE::UNKNOWN;
 };

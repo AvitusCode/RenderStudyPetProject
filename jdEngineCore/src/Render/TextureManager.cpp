@@ -7,6 +7,7 @@ void TextureManager::loadTexture2D(const std::string& key, const std::string& fi
 		return;
 	}
 
+	std::scoped_lock lk(_mtx);
 	auto tex_ptr = std::make_unique<Texture>();
 	if (!tex_ptr->loadTexture2D(fileName, generateMipmaps))
 	{
@@ -17,7 +18,7 @@ void TextureManager::loadTexture2D(const std::string& key, const std::string& fi
 	_textureCache[key] = std::move(tex_ptr);
 }
 
-const Texture* TextureManager::getTexture(const std::string& key) const
+[[nodiscard]] const Texture* TextureManager::getTexture(const std::string& key) const
 {
 	if (!containsTexture(key))
 	{
@@ -29,11 +30,13 @@ const Texture* TextureManager::getTexture(const std::string& key) const
 }
 bool TextureManager::containsTexture(const std::string& key) const
 {
+	std::shared_lock lk(_mtx);
 	return _textureCache.count(key) > 0;
 }
 
 std::string TextureManager::containsTextureWithPath(const std::string& filePath) const
 {
+	std::shared_lock lk(_mtx);
 	for (const auto& [key, texture] : _textureCache)
 	{
 		if (texture->getFilePath() == filePath) {
@@ -46,6 +49,7 @@ std::string TextureManager::containsTextureWithPath(const std::string& filePath)
 
 bool TextureManager::deleteTexture(const std::string& key)
 {
+	std::scoped_lock lk(_mtx);
 	if (containsTexture(key))
 	{
 		_textureCache.erase(key);
@@ -57,5 +61,6 @@ bool TextureManager::deleteTexture(const std::string& key)
 
 void TextureManager::clearTextureCache()
 {
+	std::scoped_lock lk(_mtx);
 	_textureCache.clear();
 }

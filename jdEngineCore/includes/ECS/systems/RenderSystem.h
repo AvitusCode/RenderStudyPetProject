@@ -17,7 +17,7 @@ public:
 	void OnUpdate(float dt) override;
 	void OnDispose() override;
 
-	static std::shared_ptr<RenderSystem> getRenderSystem();
+	static std::shared_ptr<RenderSystem> getSystem();
 
 private:
 	void resizeListener(EventComponent*);

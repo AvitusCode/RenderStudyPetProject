@@ -1,6 +1,5 @@
 #include "Render/Texture.h"
-#include "Utils/stb_image.h"
-#include <iostream>
+#include "Utils/logger.h"
 #include <mutex>
 
 Texture::Texture(Texture&& other) noexcept
@@ -28,6 +27,15 @@ Texture::~Texture() noexcept {
 	deleteTexture();
 }
 
+// @fixme
+// A very unpleasant violation of the semantics of constancy
+void Texture::complete() const
+{
+    if (!isLoaded()) {
+        tex_completer();
+    }
+}
+
 bool Texture::createFromData(const unsigned char* data, GLsizei width, GLsizei height, GLenum format, bool generateMipmaps)
 {
     if (isLoaded()) {
@@ -39,6 +47,10 @@ bool Texture::createFromData(const unsigned char* data, GLsizei width, GLsizei h
     m_format = format;
 
     glGenTextures(1, &m_textureID);
+    if (m_textureID == 0) {
+        LOG(ERROR) << "glGenTextures has failed!";
+        return false;
+    }
     glBindTexture(GL_TEXTURE_2D, m_textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, m_format, m_width, m_height, 0, m_format, GL_UNSIGNED_BYTE, data);
 
@@ -46,6 +58,7 @@ bool Texture::createFromData(const unsigned char* data, GLsizei width, GLsizei h
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
+    LOG(INFO) << "Creating texture with id=" << m_textureID;
     return true;
 }
 
@@ -53,11 +66,11 @@ bool Texture::loadTexture2D(const std::string& filePath, bool generateMipmaps)
 {
     stbi_set_flip_vertically_on_load(true);
     int bytesPerPixel;
-    const auto imageData = stbi_load(filePath.c_str(), &m_width, &m_height, &bytesPerPixel, 0);
+    auto imageData = stbi_load(filePath.c_str(), &m_width, &m_height, &bytesPerPixel, 0);
     
     if (imageData == nullptr)
     {
-        std::cerr << "ERROR: Failed to load image " << filePath << "!" << std::endl;
+        LOG(ERROR) << "Failed to load image " << filePath;
         return false;
     }
 
@@ -72,11 +85,19 @@ bool Texture::loadTexture2D(const std::string& filePath, bool generateMipmaps)
         format = GL_DEPTH_COMPONENT;
     }
 
-    const auto result = createFromData(imageData, m_width, m_height, format, generateMipmaps);
-    stbi_image_free(imageData);
+    tex_completer = [this, imageData, format, generateMipmaps]() mutable {
+        bool res{ false };
+        if (!imageData) {
+            return res;
+        }
+        res = createFromData(imageData, m_width, m_height, format, generateMipmaps);
+        stbi_image_free(imageData);
+        imageData = nullptr;
+        return res;
+    };
     m_filePath = filePath;
 
-    return result;
+    return true;
 }
 
 void Texture::bind(GLenum textureUnit) const
@@ -95,8 +116,10 @@ void Texture::deleteTexture() noexcept
         return;
     }
 
-    // TODO: log
-    std::cout << "Delete texture: " << m_textureID << std::endl;
+    if (tex_completer) {
+        tex_completer();
+    }
+    LOG(INFO) << "Delete texture with id=" << m_textureID;
 
     glDeleteTextures(1, &m_textureID);
     m_textureID = 0;
@@ -163,7 +186,7 @@ bool Texture::isLoadedCheck() const
 {
     if (!isLoaded())
     {
-        std::cerr << "ERROR: not loaded texture!" << std::endl;
+        LOG(ERROR) << "not loaded texture!";
         return false;
     }
 

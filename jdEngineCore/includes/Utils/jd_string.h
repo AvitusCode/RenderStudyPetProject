@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <cstdarg>
 
 namespace jd::strings
 {
@@ -69,6 +70,16 @@ namespace jd::strings
 		return result;
 	}
 
+	inline std::string getFileName(std::string_view path)
+	{
+		size_t indx = path.find_last_of('\\');
+		if (indx == path.npos) {
+			indx = path.find_last_of('/');
+		}
+
+		return indx == path.npos ? "" : std::string(path.substr(indx + 1));
+	}
+
 	inline std::string getDirPath(std::string_view path)
 	{
 		size_t indx = path.find_last_of('\\');
@@ -88,34 +99,22 @@ namespace jd::strings
 		ss << str;
 		return ss.str();
 	}
+}
 
-	template<typename T, typename... Args>
-	inline std::string formatImpl(const char* str, std::stringstream& ss, T arg, const Args&... args)
+namespace jd::fmt
+{
+	inline std::string print(const char* fmt, ...)
 	{
-		std::string result{};
-
-		while (*str != 0)
-		{
-			if (*str == '{' && *(str + 1) == '}')
-			{
-				ss << arg;
-				result = formatImpl(str + 2 * sizeof(char), ss, args...);
-				break;
-			}
-			else {
-				ss << *str;
-			}
-
-			str++;
-		}
-
+		va_list ap;
+		va_start(ap, fmt);
+		int needed = vsnprintf(nullptr, 0, fmt, ap);
+		va_end(ap);
+		std::string result(needed + 1, '\0');
+		va_start(ap, fmt);
+		vsnprintf(result.data(), result.size(), fmt, ap);
+		va_end(ap);
+		result.pop_back(); // remove last '\0'
+		
 		return result;
-	}
-
-	template<typename... Args>
-	inline std::string format(const std::string& fmt, const Args&... args)
-	{
-		std::stringstream ss;
-		return formatImpl(fmt.c_str(), ss, args...);
 	}
 }

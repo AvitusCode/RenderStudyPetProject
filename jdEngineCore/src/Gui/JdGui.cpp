@@ -4,6 +4,7 @@
 #include "imgui/imgui_internal.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
+#include "Gui/imgui_notify.h"
 
 #include "Gui/JdGui.h"
 #include "Display.h"
@@ -43,6 +44,10 @@ namespace jd
 		auto& display = Display::getDisplay();
 		ImGui_ImplGlfw_InitForOpenGL(display.getGLFWwindow(), true);
 		ImGui_ImplOpenGL3_Init("#version 410");
+
+		// Initialize notifier
+		ImGui::MergeIconsWithLatestFont(16.0f, false);
+
 		status = true;
 	}
 

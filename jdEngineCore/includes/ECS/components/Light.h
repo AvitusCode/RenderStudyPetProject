@@ -1,19 +1,36 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <variant>
 
-enum class LightType : uint8_t
+struct DirLight
 {
-	LIGHT_NOTHING,
-	LIGHT_DIRLIGHT,
-	LIGHT_POINTLIGHT,
-	LIGHT_SPOTLIGHT
+	glm::vec3 direction;
+};
+
+struct PointLight
+{
+	float constant;
+	float linear;
+	float quadratic;
+};
+
+struct SpotLight
+{
+	glm::vec3 direction;
+
+	float constant;
+	float linear;
+	float quadratic;
+
+	float cutOff;
+	float outerCutOff;
 };
 
 // Struct for light with ambient, diffuse and specular components
 struct Light
 {
 	// The colors of each of the light's components
-	LightType m_lightType = LightType::LIGHT_NOTHING;
+	std::variant<std::monostate, DirLight, PointLight, SpotLight> lightType;
 
 	glm::vec3 ambientColor;
 	glm::vec3 diffuseColor;

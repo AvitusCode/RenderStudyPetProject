@@ -15,10 +15,7 @@ endif()
 
 add_subdirectory(jdEngineCore)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp Application.cpp)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE jdEngineCore)
-target_link_directories(${PROJECT_NAME} PUBLIC 
-        jdEngineCore/includes
-)

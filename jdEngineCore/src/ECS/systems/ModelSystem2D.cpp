@@ -5,26 +5,28 @@
 
 #include <glm/glm.hpp>
 
-std::shared_ptr<ModelSystem2D> ModelSystem2D::getModelSystem()
+std::shared_ptr<Model2DSystem> Model2DSystem::getSystem()
 {
 	auto& jd_engine = jd::Engine::getEngine();
 	static bool sys_on = false;
 
 	if (!sys_on)
 	{
-		auto modelSys = jd_engine.RegisterSystem<ModelSystem2D>();
+		auto modelSys = jd_engine.RegisterSystem<Model2DSystem>();
+		jd_engine.RegisterComponent<Renderable>();
+		jd_engine.RegisterComponent<Mesh2D>();
 		Signature signature;
 		signature.set(jd_engine.GetComponentType<Renderable>());
 		signature.set(jd_engine.GetComponentType<Mesh2D>());
-		jd_engine.SetSystemSignature<ModelSystem2D>(signature);
+		jd_engine.SetSystemSignature<Model2DSystem>(signature);
 		sys_on = true;
 		return modelSys;
 	}
 
-	return jd_engine.GetSystem<ModelSystem2D>();
+	return jd_engine.GetSystem<Model2DSystem>();
 }
 
-void ModelSystem2D::OnInit()
+void Model2DSystem::OnInit()
 {
 	auto& jd_engine = jd::Engine::getEngine();
 
@@ -41,17 +43,12 @@ void ModelSystem2D::OnInit()
 	}
 }
 
-void ModelSystem2D::OnUpdate(float dt)
+void Model2DSystem::OnUpdate(float dt)
 {
 	OnInit();
 }
 
-void ModelSystem2D::OnDispose()
+void Model2DSystem::OnDispose()
 {
-	auto& jd_engine = jd::Engine::getEngine();
-	for (Entity entity : mEntities)
-	{
-		auto& mesh = jd_engine.GetComponent<Mesh2D>(entity);
-		delete mesh.shape;
-	}
+
 }

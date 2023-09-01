@@ -11,16 +11,19 @@ class ComponentManager
 {
 public:
 	template<typename T>
-	void RegisterComponent()
+	ComponentType RegisterComponent()
 	{
 		const char* typeName = typeid(T).name();
 
-		assert(mComponentTypes.find(typeName) == mComponentTypes.end() && "Registering component type more than once.");
+		if (auto& component = mComponentTypes.find(typeName); component != mComponentTypes.end()) {
+			return component->second;
+		}
 
 		mComponentTypes.insert({typeName, mNextComponentType});
 		mComponentArrays.insert({typeName, std::make_shared<ComponentArray<T>>()});
 
 		++mNextComponentType;
+		return mComponentTypes[typeName];
 	}
 
 	template<typename T>
@@ -59,7 +62,6 @@ private:
 	std::unordered_map<const char*, ComponentType> mComponentTypes{};
 	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> mComponentArrays{};
 	ComponentType mNextComponentType{};
-
 
 	template<typename T>
 	std::shared_ptr<ComponentArray<T>> GetComponentArray()

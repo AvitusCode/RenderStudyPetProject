@@ -1,5 +1,5 @@
 #include "Render/UniformBuffer.h"
-#include <iostream>
+#include "Utils/logger.h"
 
 UniformBuffer::~UniformBuffer() noexcept {
 	deleteUBO();
@@ -35,12 +35,13 @@ void UniformBuffer::createUBO(const size_t byteSize, GLenum usageHint)
 
 	m_byteSize = byteSize;
 	m_isBufferCreated = true;
+	LOG(INFO) << "creating UniformBuffer ID=" << m_bufferID;
 }
 
 void UniformBuffer::bindUBO() const
 {
 	if (!m_isBufferCreated) {
-		std::cerr << "ERROR: UBO does not exsist!" << std::endl;
+		LOG(ERROR) << "UBO does not exsist!";
 		return;
 	}
 
@@ -50,12 +51,12 @@ void UniformBuffer::bindUBO() const
 void UniformBuffer::updateBufferData(const size_t offset, const void* ptrData, const size_t dataSize)
 {
 	if (!m_isBufferCreated) {
-		std::cerr << "ERROR: UBO does not exsist!" << std::endl;
+		LOG(ERROR) << "UBO does not exsist!";
 		return;
 	}
 
 	if (offset >= m_byteSize || offset + dataSize > m_byteSize) {
-		std::cerr << "ERROR: to big data!" << std::endl;
+		LOG(ERROR) << "ERROR: to big data!";
 		return;
 	}
 
@@ -65,7 +66,7 @@ void UniformBuffer::updateBufferData(const size_t offset, const void* ptrData, c
 void UniformBuffer::bindBufferBaseToBindingPoint(const GLuint bindingPoint) const
 {
 	if (!m_isBufferCreated) {
-		std::cerr << "ERROR: UBO does not exsist!" << std::endl;
+		LOG(ERROR) << "UBO does not exsist!";
 		return;
 	}
 
@@ -86,7 +87,7 @@ void UniformBuffer::deleteUBO() noexcept
 		return;
 	}
 
-	std::cout << "Dell uniform buffer id: " << m_bufferID << std::endl;
+	LOG(INFO) << "Dell uniform buffer ID=" << m_bufferID;
 
 	glDeleteBuffers(1, &m_bufferID);
 	m_byteSize = m_bufferID = 0;

@@ -1,5 +1,5 @@
 #include "Render/Sampler.h"
-#include <iostream>
+#include "Utils/logger.h"
 
 Sampler::~Sampler() {
 	deleteSampler();
@@ -12,7 +12,7 @@ void Sampler::create(GLuint dim, bool repeat)
 	}
 
 	if (dim < 2u || dim > 3u) {
-		std::cerr << "Wrong sampler dimension" << std::endl;
+		LOG(ERROR) << "Wrong sampler dimension";
 		return;
 	}
 
@@ -21,12 +21,14 @@ void Sampler::create(GLuint dim, bool repeat)
 	glGenSamplers(1, &m_samplerID);
 	m_isCreated = true;
 	setRepeat(repeat);
+
+	LOG(INFO) << "Create sampler id=" << m_samplerID;
 }
 
 void Sampler::bind(int textureUnit) const
 {
 	if (!createdCheck()) {
-		std::cerr << "ERROR: non existing sampler!" << std::endl;
+		LOG(ERROR) << "non existing sampler!";
 		return;
 	}
 
@@ -43,8 +45,7 @@ void Sampler::deleteSampler()
 		return;
 	}
 
-	// TODO: log
-	std::cout << "Deleting sampler with ID " << m_samplerID << std::endl;
+	LOG(INFO) << "Deleting sampler with ID " << m_samplerID;
 
 	glDeleteSamplers(1, &m_samplerID);
 	m_isCreated = false;
@@ -53,7 +54,7 @@ void Sampler::deleteSampler()
 void Sampler::setMagnificationFilter(MagFilter magFilter) const
 {
 	if (!createdCheck()) {
-		std::cerr << "ERROR: non existing sampler!" << std::endl;
+		LOG(ERROR) << "non existing sampler!";
 		return;
 	}
 
@@ -70,7 +71,7 @@ void Sampler::setMagnificationFilter(MagFilter magFilter) const
 void Sampler::setMinificationFilter(MinFilter minFilter) const
 {
 	if (!createdCheck()) {
-		std::cerr << "ERROR: non existing sampler!" << std::endl;
+		LOG(ERROR) << "non existing sampler!";
 		return;
 	}
 
@@ -99,7 +100,7 @@ void Sampler::setMinificationFilter(MinFilter minFilter) const
 void Sampler::setRepeat(bool repeat) const
 {
 	if (!createdCheck()) {
-		std::cerr << "ERROR: non existing sampler!" << std::endl;
+		LOG(ERROR) << "non existing sampler!";
 		return;
 	}
 

@@ -10,16 +10,20 @@
 
 #include "Events/WindowEvent.h"
 
-#include <iostream>
+#include "Utils/logger.h"
 
-std::shared_ptr<RenderSystem> RenderSystem::getRenderSystem()
+std::shared_ptr<RenderSystem> RenderSystem::getSystem()
 {
 	auto& jd_engine = jd::Engine::getEngine();
 	static bool sys_on = false;
 
 	if (!sys_on)
 	{
+		jd_engine.RegisterComponent<Renderable>();
+		jd_engine.RegisterComponent<Transform>();
+		jd_engine.RegisterComponent<Camera>();
 		auto rendSys = jd_engine.RegisterSystem<RenderSystem>();
+		jd_engine.RegisterComponent<Renderable>();
 		Signature signature;
 		signature.set(jd_engine.GetComponentType<Renderable>());
 		jd_engine.SetSystemSignature<RenderSystem>(signature);
@@ -38,7 +42,7 @@ void RenderSystem::OnInit()
 	jd_engine.AddEventListener(METHOD_LISTENER(Events::Window::RESIZED, RenderSystem::resizeListener));
 
 	mCamera = jd_engine.CreateEntity();
-	Transform transformStruct{ glm::vec3(0.0f, 0.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f) , glm::vec3(0.0f, 0.0f, 0.0f) };
+	Transform transformStruct{ glm::vec3(0.0f, 20.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f) , glm::vec3(0.0f, 0.0f, 0.0f) };
 	jd_engine.AddComponent(mCamera, transformStruct);
 
 	Camera cameraStruct;
@@ -77,7 +81,7 @@ void RenderSystem::OnUpdate(float dt)
 		renderable.shader->use();
 		renderable.shader->set("viewPos", cameraTransform.position);
 
-		for (auto const& component : renderable.rdata)
+		for (const auto& component : renderable.rdata)
 		{
 			glBindVertexArray(component.VAO);
 			setTextures(renderable.shader->getId(), component.textures);
@@ -88,7 +92,7 @@ void RenderSystem::OnUpdate(float dt)
 			switch (component.drawArray)
 			{
 			case GL_ARRAY_BUFFER:
-				glDrawArrays(component.drawModeType, 0, component.sizeOfDraw);
+				glDrawArrays(component.drawModeType, 0, component.sizeOfDraw * sizeof(float));
 				break;
 			case GL_ELEMENT_ARRAY_BUFFER:
 				glDrawElements(component.drawModeType, component.sizeOfDraw, GL_UNSIGNED_INT, nullptr);
@@ -98,6 +102,9 @@ void RenderSystem::OnUpdate(float dt)
 				glPrimitiveRestartIndex(renderable.primitiveRestartIndx);
 				glDrawElements(component.drawModeType, component.sizeOfDraw, GL_UNSIGNED_INT, nullptr);
 				glDisable(GL_PRIMITIVE_RESTART);
+				break;
+			case GL_INSTANCED_DRAW:
+				glDrawElementsInstanced(component.drawModeType, component.sizeOfDraw, GL_UNSIGNED_INT, nullptr, renderable.instansedCount);
 				break;
 			}
 		}
@@ -119,7 +126,6 @@ void RenderSystem::setTextures(const GLuint shaderId, const std::vector<const Te
 	size_t heightNr = 1;
 	size_t roughnessNr = 1;
 	size_t aoNr = 1;
-
 	size_t textureNr = 1;
 
 	for (size_t i = 0; i < textures.size(); i++)
@@ -149,7 +155,7 @@ void RenderSystem::setTextures(const GLuint shaderId, const std::vector<const Te
 			number = std::to_string(aoNr++);
 		}
 		else {
-			std::cout << "No such texture: " << name << std::endl;
+			LOG(WARNING) << "No such texture: " << name;
 			continue;
 		}
 

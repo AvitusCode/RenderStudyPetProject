@@ -10,9 +10,6 @@
 
 #include "ECS/components/Material.h"
 #include "ECS/components/Light.h"
-#include "ECS/components/DirLight.h"
-#include "ECS/components/PointLight.h"
-
 #include "ECS/components/FogComponent.h"
 
 #include "ECS/systems/CameraControlSystem.h"
@@ -35,6 +32,7 @@
 void Demo1::OnCreate()
 {
 	jd::Engine& engine = jd::Engine::getEngine();
+	auto& modelManager = engine.getModelManager();
 
 	glEnable(GL_DEPTH_TEST);
 	glClearDepth(1.0);
@@ -42,61 +40,19 @@ void Demo1::OnCreate()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-	engine.RegisterComponent<Camera>();
-	engine.RegisterComponent<Mesh3D>();
-	engine.RegisterComponent<Renderable>();
-	engine.RegisterComponent<Transform>();
-	engine.RegisterComponent<AssimpModel>();
-	engine.RegisterComponent<SkyboxComponent>();
-	
-	engine.RegisterComponent<Material>();
-	engine.RegisterComponent<Light>();
-	engine.RegisterComponent<DirLight>();
-	engine.RegisterComponent<PointLight>();
-	engine.RegisterComponent<FogComponent>();
-
-	auto renderSystem = RenderSystem::getRenderSystem();
+	auto renderSystem = SYSTEM(Render);
 	systems.push_back(renderSystem);
-
-	auto cameraControlSystem = CameraControlSystem::getCameraControlSystem();
+	auto cameraControlSystem = SYSTEM(CameraControl);
 	systems.push_back(cameraControlSystem);
-
-	auto assimpMS = AssimpModelSystem::getAssimpModelSystem();
+	auto assimpMS = SYSTEM(AssimpModel);
 	systems.push_back(assimpMS);
-
-	auto materialSys = engine.RegisterSystem<MaterialSystem>();
-	{
-		Signature signature;
-		signature.set(engine.GetComponentType<Renderable>());
-		signature.set(engine.GetComponentType<Material>());
-		engine.SetSystemSignature<MaterialSystem>(signature);
-	}
+	auto materialSys = SYSTEM(Material);
 	systems.push_back(materialSys);
-
-	auto lightSys = engine.RegisterSystem<LightSystem>();
-	{
-		Signature signature;
-		signature.set(engine.GetComponentType<Light>());
-		signature.set(engine.GetComponentType<Renderable>());
-		engine.SetSystemSignature<LightSystem>(signature);
-	}
+	auto lightSys = SYSTEM(Light);
 	systems.push_back(lightSys);
-
-	auto fogSys = engine.RegisterSystem<FogSystem>();
-	{
-		Signature signature;
-		signature.set(engine.GetComponentType<Renderable>());
-		signature.set(engine.GetComponentType<FogComponent>());
-		engine.SetSystemSignature<FogSystem>(signature);
-	}
+	auto fogSys = SYSTEM(Fog);
 	systems.push_back(fogSys);
-
-	auto skySys = engine.RegisterSystem<SkyboxSystem>();
-	{
-		Signature signature;
-		signature.set(engine.GetComponentType<SkyboxComponent>());
-		engine.SetSystemSignature<SkyboxSystem>(signature);
-	}
+	auto skySys = SYSTEM(Skybox);
 	systems.push_back(skySys);
 
 	// ENTITIES
@@ -122,10 +78,12 @@ void Demo1::OnCreate()
 	Renderable renderComponent;
 	demoShader = std::move(shader);
 	renderComponent.shader = &demoShader;
-	AssimpModel amodel = loadModel(ROOT_DIR "res/objects/house/medieval_house.obj");
+	modelManager.cachedModelName("medieval_house");
+	modelManager.loadModelObj(ROOT_DIR "res/objects/house/medieval_house.obj", "medieval_house");
+	JdModel amodel{modelManager.getModel("medieval_house")};
 
-	engine.AddComponent<Renderable>(entity, std::move(renderComponent));
-	engine.AddComponent<AssimpModel>(entity, std::move(amodel));
+	engine.AddComponent<Renderable>(entity, std::move(renderComponent)); // where is problem ?
+	engine.AddComponent<JdModel>(entity, std::move(amodel));
 	engine.AddComponent<Transform>(entity,
 		Transform{ glm::vec3(0.0f, -2.0f, -10.0f),
 				   glm::vec3(0.0f, 0.0f, 0.0f),
@@ -145,7 +103,6 @@ void Demo1::OnCreate()
 	terrainRend.rdata[0].textures.push_back(textureManager.getTexture("terrain"));
 	terrainRend.shader = &demoShader;
 	
-	engine.AddComponent<Mesh3D>(entity, std::move(terrainMesh));
 	engine.AddComponent<Renderable>(entity, std::move(terrainRend));
 	engine.AddComponent<Material>(entity, Material{ glm::vec3(0.2f), glm::vec3(0.7f), glm::vec3(0.2f), 8.0f });
 
@@ -161,19 +118,18 @@ void Demo1::OnCreate()
 
 	// light
 	entity = engine.CreateEntity();
-	engine.AddComponent<Light>(entity, Light{ LightType::LIGHT_DIRLIGHT, glm::vec3(0.1f), glm::vec3(0.5f), glm::vec3(0.2f) });
-	engine.AddComponent<DirLight>(entity, DirLight{glm::vec3(0.0f, -10.0f, 0.0f)});
+	engine.AddComponent<Light>(entity, Light{ DirLight{glm::vec3(0.0f, -10.0f, 0.0f)}, glm::vec3(0.1f), glm::vec3(0.5f), glm::vec3(0.2f) });
 	engine.AddComponent<Renderable>(entity, Renderable{ {}, 0, &demoShader });
 
 	Light pointLight{
-		LightType::LIGHT_POINTLIGHT,
+		PointLight{ 1.0f, 0.045f, 0.0075f },
 		glm::vec3(0.0f, 0.2f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f)
 	};
 
 	Light pointLight2{
-		LightType::LIGHT_POINTLIGHT,
+		PointLight{ 1.0f, 0.045f, 0.0075f },
 		glm::vec3(0.2f, 0.0f, 0.0f),
 		glm::vec3(1.0f, 0.0f, 0.0f),
 		glm::vec3(1.0f, 0.0f, 0.0f) 
@@ -181,13 +137,11 @@ void Demo1::OnCreate()
 
 	entity = engine.CreateEntity();
 	engine.AddComponent<Light>(entity, std::move(pointLight));
-	engine.AddComponent<PointLight>(entity, PointLight{ 1.0f, 0.045f, 0.0075f });
 	engine.AddComponent<Transform>(entity, Transform{ glm::vec3(-10.0f, 5.0f, -10.0f) });
 	engine.AddComponent<Renderable>(entity, Renderable{ {}, 0, &demoShader });
 
 	entity = engine.CreateEntity();
 	engine.AddComponent<Light>(entity, std::move(pointLight2));
-	engine.AddComponent<PointLight>(entity, PointLight{ 1.0f, 0.045f, 0.0075f });
 	engine.AddComponent<Transform>(entity, Transform{ glm::vec3(10.0f, 5.0f, -15.0f) });
 	engine.AddComponent<Renderable>(entity, Renderable{ {}, 0, &demoShader });
 
