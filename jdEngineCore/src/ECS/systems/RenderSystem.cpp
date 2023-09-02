@@ -34,6 +34,8 @@ std::shared_ptr<RenderSystem> RenderSystem::getSystem()
 	return jd_engine.GetSystem<RenderSystem>();
 }
 
+// TODO: Add grid system
+
 void RenderSystem::OnInit()
 {
 	auto& jd_engine = jd::Engine::getEngine();
@@ -57,6 +59,8 @@ void RenderSystem::OnInit()
 	UBO.createUBO(2 * sizeof(glm::mat4));
 	UBO.bindUBO();
 	UBO.bindBufferBaseToBindingPoint(UniformBlockBindingPoints::MATRICES);
+
+	grid = new Grid{};
 }
 
 void RenderSystem::OnUpdate(float dt)
@@ -74,6 +78,8 @@ void RenderSystem::OnUpdate(float dt)
 	UBO.bindUBO();
 	UBO.updateBufferData(0, &view[0][0], sizeof(glm::mat4));
 	UBO.updateBufferData(sizeof(glm::mat4), &projection[0][0], sizeof(glm::mat4));
+
+	grid->Draw();
 
 	for (auto const& entity : mEntities)
 	{
@@ -115,7 +121,7 @@ void RenderSystem::OnUpdate(float dt)
 
 void RenderSystem::OnDispose()
 {
-
+	delete grid;
 }
 
 void RenderSystem::setTextures(const GLuint shaderId, const std::vector<const Texture*>& textures)

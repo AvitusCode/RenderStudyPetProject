@@ -12,7 +12,6 @@
 #include "Display.h"
 #include "Gui/Interface.h"
 #include "Scenes/AppScene.h"
-#include "Render/Grid.h"
 #include "Render/UniformBuffer.h"
 #include "ECS/components/Light.h"
 
@@ -71,17 +70,16 @@ void Application::Loop()
 {
 	SceneManager& sm = engine_.getSceneManager();
 	SamplerManager& sampleManager = engine_.getSamplerManager();
-	Grid grid{};
 	float dt = 0.0f;
 
 	while (!display_.shouldClose())
 	{
 		const auto start_time = std::chrono::steady_clock::now();
+		
 		sampleManager.getSampler("sampler_default")->bind();
+
 		sm.OnUpdate(dt);
-
-		grid.Draw();
-
+		
 		engine_.GuiBegin();
 		jd::Interface::ProgMenu();
 		engine_.GuiEnd();

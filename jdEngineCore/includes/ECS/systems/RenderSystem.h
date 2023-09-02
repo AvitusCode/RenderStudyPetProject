@@ -4,6 +4,7 @@
 #include "Render/Shader.h"
 #include "Render/UniformBuffer.h"
 #include "Render/Primitives.h"
+#include "Render/Grid.h"
 #include <memory>
 
 class EventComponent;
@@ -26,4 +27,5 @@ private:
 	Entity mCamera;
 	Primitives::Frustum frustum;
 	UniformBuffer UBO;
+	Grid* grid;
 };

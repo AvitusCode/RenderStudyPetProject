@@ -76,7 +76,7 @@ namespace sm::model
 	}
 
 	MaybeState onEvent(state::Work& state, const event::Draw& evt) {
-		if (!SetModelMenu()) {
+		if (SetModelMenu()) {
 			LOG(INFO) << jd::ModelMenu::info() << " Work -> Idle";
 			return state::Idle{};
 		}
@@ -277,7 +277,7 @@ bool SetModelMenu()
 	static uint32_t model_current_idx = 0;
 
 	if (models_menu.empty()) {
-		return true;
+		return false;
 	}
 
 	ImGui::Begin("SetModelMenu");
@@ -324,9 +324,9 @@ bool SetModelMenu()
 	if (ImGui::Button("Close"))
 	{
 		ImGui::End();
-		return false;
+		return true;
 	}
 
 	ImGui::End();
-	return true;
+	return false;
 }

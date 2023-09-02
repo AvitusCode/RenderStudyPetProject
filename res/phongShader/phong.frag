@@ -36,7 +36,7 @@ uniform int nrSpotLights;
 void main()
 {
     vec3 viewDir = normalize(viewPos - gs_inputs.FragPos);
-    vec3 result = vec3(0.0);
+    vec3 result = vec3(0.2); // ambient light for initiate
 
     for (int i = 0; i < nrDirLights; i++) {
         result += calcDirLight(dirLights[i], gs_inputs.Normal, viewDir, material);

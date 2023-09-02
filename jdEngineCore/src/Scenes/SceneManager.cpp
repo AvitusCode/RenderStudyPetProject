@@ -1,5 +1,5 @@
 #include "Scenes/SceneManager.h"
-#include <iostream>
+#include "Utils/logger.h"
 
 void SceneManager::OnUpdate(float dt)
 {
@@ -22,7 +22,7 @@ void SceneManager::OnUpdate(float dt)
 		scenes[current_scene]->OnUpdate(dt);
 	}
 	else {
-		std::cerr << "ERROR: there are not current scene: " << current_scene << std::endl;
+		LOG(ERROR) << "there are not current scene: " << current_scene;
 	}
 }
 
@@ -47,7 +47,7 @@ void SceneManager::SetScene(const std::string& name)
 
 	if (iter == named_scenes.end()) 
 	{
-		std::cerr << "ERROR: scene with name " << name << "does not exsist" << std::endl;
+		LOG(ERROR) << "scene with name " << name << "does not exsist";
 		return;
 	}
 
